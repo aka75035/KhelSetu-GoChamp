@@ -1,0 +1,15 @@
+{
+  "appId": "com.khelsetu.app",
+  "appName": "Khelsetu",
+  "webDir": "build",
+  "plugins": {
+    "AndroidPermissions": {
+      "READ_EXTERNAL_STORAGE": {
+        "prompt": "Allow app to read external storage"
+      },
+      "WRITE_EXTERNAL_STORAGE": {
+        "prompt": "Allow app to write to external storage"
+      }
+    }
+  }
+}

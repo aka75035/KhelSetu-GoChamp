@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Khelsetu</string>
+    <string name="title_activity_main">Khelsetu</string>
+    <string name="package_name">com.khelsetu.app</string>
+    <string name="custom_url_scheme">com.khelsetu.app</string>
+</resources>
