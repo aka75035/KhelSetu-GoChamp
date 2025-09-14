@@ -77,60 +77,54 @@ export default function CameraOverlay({
     }
   };
 
-  // Save video to device (Capacitor Filesystem)
+  // Save video to device and queue for upload
   const handleSave = async () => {
     console.log("Save button clicked");
     if (!videoUrl) return;
     try {
       const response = await fetch(videoUrl);
       const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const base64Data = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-      );
-      const fileName = `exercise_${Date.now()}.webm`;
-      const path = `Videos/${athleteId}/${exerciseKey}/${fileName}`;
+      
+      // Convert blob to base64 to save with Capacitor Filesystem
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        const fileName = `exercise_${Date.now()}.webm`;
+        const path = `videos/${athleteId}/${exerciseKey}/${fileName}`; // athleteId is the Aadhar number
 
-      // Save locally
-      await Filesystem.writeFile({
-        path,
-        data: base64Data,
-        directory: Directory.Documents,
-        recursive: true,
-      });
-
-      // Upload to Supabase Storage
-      const { error } = await supabase.storage
-        .from("videos")
-        .upload(`${athleteId}/${exerciseKey}/${fileName}`, blob, {
-          cacheControl: "3600",
-          upsert: false,
+        // 1. Save the video file locally
+        await Filesystem.writeFile({
+          path,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true,
         });
 
-      if (error) {
-        // If upload fails, save to pendingVideos for later upload
+        // 2. Add the video to the pending upload queue in localStorage
         const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
         pendingVideos.push({
-          athleteId: athleteId,
+          athleteAadhar: athleteId, // Pass Aadhar number here
           exerciseKey: exerciseKey,
           fileName: fileName,
           path: path,
-          uploading: false, // Add this flag
         });
         localStorage.setItem("pendingVideos", JSON.stringify(pendingVideos));
-        alert("Video saved offline. It will be uploaded when you are online.");
-      } else {
-        alert("Video saved and uploaded!");
-        onVideoUploaded(); // Refresh online videos
-        onOfflineVideoAdded(); // Refresh offline videos
-        onClose();
-      }
+
+        alert("Video saved locally. It will be uploaded when an internet connection is available.");
+        
+        // 3. Notify parent components to refresh their views
+        onOfflineVideoAdded(); // Refresh the offline videos list immediately
+        onClose(); // Close the camera overlay
+      };
+
+    } catch (e) {
+      console.error("Save error:", e);
+      alert("Failed to save video locally: " + (e as any).message);
+    } finally {
       setShowSavePrompt(false);
       setVideoUrl(null);
       cleanupStream();
-    } catch (e) {
-      console.error("Save error:", e);
-      alert("Failed to save video: " + (e as any).message);
     }
   };
 

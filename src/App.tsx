@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
-import { Session } from '@supabase/supabase-js';
+import { Session as SupabaseSession } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
@@ -32,6 +32,7 @@ import AdminDashboard from './screens/admin/AdminDashboard';
 import AthleteDashboard from './screens/athlete/AthleteDashboard';
 import { uploadPendingVideos } from "./lib/uploadPendingVideos";
 import { Toaster } from 'react-hot-toast';
+import logo from '/logo.png';
 
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -177,7 +178,6 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
           signUpData.mobile_number = mobileNumber;
           signUpData.aadhaar_number = aadhaarNumber;
         }
-
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -260,10 +260,10 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
 
 // Sample data for athletes - in a real app, this would come from your database
 const sampleAthletes = [
-  { id: 1, name: 'Alex Morgan', age: 34, sport: 'Soccer', rank: 'Pro', imageUrl: 'https://ui-avatars.com/api/?name=Alex+Morgan&background=FFC0CB&color=000000' },
-  { id: 2, name: 'Jordan Smith', age: 22, sport: 'Basketball', rank: 'College', imageUrl: 'https://ui-avatars.com/api/?name=Jordan+Smith&background=ADD8E6&color=000000' },
-  { id: 3, name: 'Maria Garcia', age: 17, sport: 'Tennis', rank: 'High School', imageUrl: 'https://ui-avatars.com/api/?name=Maria+Garcia&background=90EE90&color=000000' },
-  { id: 4, name: 'Ken Miles', age: 28, sport: 'Track & Field', rank: 'Amateur', imageUrl: 'https://ui-avatars.com/api/?name=Ken+Miles&background=FFFF00&color=000000' },
+  { id: "1", name: 'Alex Morgan', age: 34, sport: 'Soccer', rank: 'Pro', imageUrl: 'https://ui-avatars.com/api/?name=Alex+Morgan&background=FFC0CB&color=000000' },
+  { id: "2", name: 'Jordan Smith', age: 22, sport: 'Basketball', rank: 'College', imageUrl: 'https://ui-avatars.com/api/?name=Jordan+Smith&background=ADD8E6&color=000000' },
+  { id: "3", name: 'Maria Garcia', age: 17, sport: 'Tennis', rank: 'High School', imageUrl: 'https://ui-avatars.com/api/?name=Maria+Garcia&background=90EE90&color=000000' },
+  { id: "4", name: 'Ken Miles', age: 28, sport: 'Track & Field', rank: 'Amateur', imageUrl: 'https://ui-avatars.com/api/?name=Ken+Miles&background=FFFF00&color=000000' },
 ];
 
 // Sample performance data for the chart
@@ -276,35 +276,32 @@ const samplePerformanceData = [
   { name: 'Jun', score: 700 },
 ];
 
-export type Athlete = typeof sampleAthletes[0];
+export type Athlete = {
+  id: string; // This is the UUID from auth.users
+  aadhar_card_number: string; // This is the new primary key
+  name: string;
+  age: number;
+  sport: string;
+  rank: string;
+  imageUrl: string;
+  videoUrls?: any[];
+};
 
-function AthleteCard({ athlete, onViewProfile }: { athlete: Athlete; onViewProfile: (athlete: Athlete) => void; }) {
-  return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={athlete.imageUrl} alt={athlete.name} />
-          <AvatarFallback>{athlete.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-        </Avatar>
-        <div>
-          <CardTitle>{athlete.name}</CardTitle>
-          <p className="text-sm text-muted-foreground">{athlete.sport}</p>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Age:</span>
-          <span>{athlete.age}</span>
-        </div>
-        <div className="flex justify-between text-sm items-center">
-          <span className="text-muted-foreground">Rank:</span>
-          <Badge variant="secondary">{athlete.rank}</Badge>
-        </div>
-        <Button className="w-full mt-2" onClick={() => onViewProfile(athlete)}>View Profile</Button>
-      </CardContent>
-    </Card>
-  );
-}
+export type Session = {
+  user: {
+    id: string;
+    email: string;
+    password: string;
+    user_metadata: {
+      full_name: string;
+      role: 'admin' | 'athlete';
+      [key: string]: any;
+    };
+    [key: string]: any;
+  };
+  [key: string]: any;
+};
+
 
 export function AthleteProfilePage({ athlete, onBack, showBackButton = true, onSave }: { athlete: Athlete; onBack: () => void; showBackButton?: boolean; onSave?: (updatedAthlete: Athlete) => void; }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -459,7 +456,21 @@ export function AthleteProfilePage({ athlete, onBack, showBackButton = true, onS
   );
 }
 
-function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; session: Session }) {
+type AppSession = {
+  user: {
+    id: string;
+    email: string;
+    password: string;
+    user_metadata: {
+      full_name: string;
+      role: 'admin' | 'athlete';
+      [key: string]: any;
+    };
+    [key: string]: any;
+  };
+  [key: string]: any;
+};
+function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; session: AppSession }) {
   const [activeTab, setActiveTab] = useState('home');
   const [videoStep, setVideoStep] = useState('selection'); // 'selection' or 'recording'
   const [selectedExercise, setSelectedExercise] = useState('');
@@ -470,7 +481,7 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
   const [uploadMessage, setUploadMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { startCamera, stopCamera, error: cameraError, isRecording, startRecording, stopRecording } = useCamera(videoRef);
+  const { startCamera, stopCamera, error: cameraError, isRecording, startRecording, stopRecording } = useCamera(videoRef as React.RefObject<HTMLVideoElement>);
 
   const fetchVideos = async () => {
     setIsLoadingVideos(true);
@@ -529,7 +540,8 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
 
   // For demonstration, we use a hardcoded test athlete profile.
   const testAthlete: Athlete = {
-    id: 99,
+    id: "99",
+    aadhar_card_number: session.user.user_metadata.aadhaar_number || session.user.user_metadata.aadhar_card_number || "000000000000",
     name: session.user.user_metadata.full_name || 'Test Athlete',
     age: 25,
     sport: 'General Fitness',
@@ -704,7 +716,7 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
                     <p className="text-muted-foreground">Loading videos...</p>
                   ) : (groupedVideos[exercise] && groupedVideos[exercise].length > 0) ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {groupedVideos[exercise].map(video => (
+                      {groupedVideos[exercise].map((video: { id: string; path: string; video_url: string; created_at: string; }) => (
                         <Card key={video.id} className="overflow-hidden relative group">
                           <video
                             className="w-full h-auto bg-black"
@@ -801,7 +813,7 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState('roleSelection'); // 'roleSelection', 'adminAuth', 'athleteAuth'
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<SupabaseSession | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
@@ -824,15 +836,22 @@ export default function App() {
   };
 
   useEffect(() => {
-    window.addEventListener("online", uploadPendingVideos);
-    uploadPendingVideos(); // Try on app start
-    return () => {
-      window.removeEventListener("online", uploadPendingVideos);
+    // Only call uploadPendingVideos if athlete info is available
+    const handleOnline = () => {
+      const athleteAadhar = session?.user?.user_metadata?.aadhaar_number || session?.user?.user_metadata?.aadhar_card_number;
+      if (athleteAadhar) {
+        uploadPendingVideos(athleteAadhar);
+      }
     };
-  }, []);
+    window.addEventListener("online", handleOnline);
+    handleOnline(); // Try on app start
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [session]);
 
   if (isLoading) {
-    return <LoadingScreen />;
+  return <LoadingScreen onComplete={() => {}} />;
   }
 
   // Check for real Supabase session first
