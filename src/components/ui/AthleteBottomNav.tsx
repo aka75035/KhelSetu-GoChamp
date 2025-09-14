@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Home, Video, Settings, Menu } from "lucide-react"; // Changed Settings to Menu
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // Import Sheet components
-import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "./sheet"; // Import Sheet components
+import { Button } from "./button";
 
 interface AthleteBottomNavProps {
   active: string;
@@ -47,6 +47,12 @@ const AthleteBottomNav: React.FC<AthleteBottomNavProps> = ({ active, onNav }) =>
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="bg-white">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription>
+                Select an option from the menu below.
+              </SheetDescription>
+            </SheetHeader>
             <div className="grid gap-4 py-4">
               <Button variant="ghost" onClick={openNewsOfSAI}>
                 News of SAI
