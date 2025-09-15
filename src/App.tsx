@@ -32,6 +32,7 @@ import AdminDashboard from './screens/admin/AdminDashboard';
 import AthleteDashboard from './screens/athlete/AthleteDashboard';
 import { uploadPendingVideos } from "./lib/uploadPendingVideos";
 import { Toaster } from 'react-hot-toast';
+import { HumanDetectionDemo } from './components/HumanDetectionDemo';
 import logo from '/logo.png';
 
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
@@ -126,7 +127,7 @@ function TestingPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function RoleSelectionPage({ onSelectRole }: { onSelectRole: (role: 'admin' | 'athlete') => void }) {
+function RoleSelectionPage({ onSelectRole }: { onSelectRole: (role: 'admin' | 'athlete' | 'demo') => void }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -143,6 +144,10 @@ function RoleSelectionPage({ onSelectRole }: { onSelectRole: (role: 'admin' | 'a
             <Users className="h-6 w-6 mr-4" />
             I am an Admin
           </Button>
+          <Button variant="secondary" className="w-full h-20 text-lg" onClick={() => onSelectRole('demo')}>
+            <Camera className="h-6 w-6 mr-4" />
+            Try Human Detection Demo
+          </Button>
         </CardContent>
       </Card>
     </div>
@@ -158,6 +163,7 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +245,17 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
+              <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute inset-y-0 right-2 my-auto text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
             {message && <p className="text-sm text-muted-foreground text-center">{message}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
@@ -670,6 +686,10 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
                       <p className="text-red-400 mt-2 text-center">{cameraError}</p>
                     </div>
                   )}
+                  {/* Human Detection Status */}
+                  <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    {humanDetected ? '👤 Human Detected' : '❌ No Human'}
+                  </div>
                   {isUploading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 p-4">
                       <p>Uploading...</p>
@@ -812,7 +832,7 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState('roleSelection'); // 'roleSelection', 'adminAuth', 'athleteAuth'
+  const [view, setView] = useState('roleSelection'); // 'roleSelection', 'adminAuth', 'athleteAuth', 'demo'
   const [session, setSession] = useState<SupabaseSession | null>(null);
 
   useEffect(() => {
@@ -865,7 +885,27 @@ export default function App() {
   }
 
   if (view === 'roleSelection') {
-    return <RoleSelectionPage onSelectRole={(role) => setView(role === 'admin' ? 'adminAuth' : 'athleteAuth')} />;
+    return <RoleSelectionPage onSelectRole={(role) => {
+      if (role === 'demo') {
+        setView('demo');
+      } else {
+        setView(role === 'admin' ? 'adminAuth' : 'athleteAuth');
+      }
+    }} />;
+  }
+
+  if (view === 'demo') {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h1 className="text-2xl font-bold">Human Detection Demo</h1>
+          <Button variant="outline" onClick={() => setView('roleSelection')}>
+            Back to Home
+          </Button>
+        </div>
+        <HumanDetectionDemo />
+      </div>
+    );
   }
 
   if (view === 'adminAuth') {
@@ -877,7 +917,13 @@ export default function App() {
   }
 
   // Fallback to role selection if view is invalid
-  return <RoleSelectionPage onSelectRole={(role) => setView(role === 'admin' ? 'adminAuth' : 'athleteAuth')} />;
+  return <RoleSelectionPage onSelectRole={(role) => {
+    if (role === 'demo') {
+      setView('demo');
+    } else {
+      setView(role === 'admin' ? 'adminAuth' : 'athleteAuth');
+    }
+  }} />;
 }
 
 // Custom hook to manage camera functionality
@@ -886,6 +932,7 @@ const useCamera = (videoRef: React.RefObject<HTMLVideoElement>) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [humanDetected, setHumanDetected] = useState(false);
 
   const startCamera = async () => {
     setError(null);

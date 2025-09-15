@@ -13,12 +13,38 @@ import Header from "../../components/ui/Header";
 import { Network } from '@capacitor/network';
 import { uploadPendingVideos } from '../../lib/uploadPendingVideos';
 import { Capacitor } from '@capacitor/core';
+import { analyzeVideo } from '../../lib/analyzeVideo';
 
 const EXERCISES = [
   { key: "situps", label: "Situps" },
   { key: "pullups", label: "Pullups" },
   { key: "pushups", label: "Pushups" },
 ];
+
+function OfflineVideoPlayer({ path }: { path: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    let revokedUrl: string | null = null;
+    const load = async () => {
+      try {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const file = await Filesystem.readFile({ path, directory: Directory.Documents });
+        const res = await fetch(file.data);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        revokedUrl = url;
+        if (videoRef.current) {
+          videoRef.current.src = url;
+        }
+      } catch (e) {
+        console.warn('Could not load offline video', path, e);
+      }
+    };
+    load();
+    return () => { if (revokedUrl) URL.revokeObjectURL(revokedUrl); };
+  }, [path]);
+  return <video ref={videoRef} controls className="w-full rounded border" />;
+}
 
 export default function AthleteDashboard({ onLogout, session }: { onLogout: () => void; session: any }) {
   // Always use the full 12-digit aadhar number for storage paths
@@ -33,18 +59,11 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [onlineVideos, setOnlineVideos] = useState<Record<string, any[]>>({});
   const [offlineVideos, setOfflineVideos] = useState<Record<string, any[]>>({});
-  const [isRecording, setIsRecording] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [videoScreen, setVideoScreen] = useState<{ type: "online" | "offline"; exercise: string } | null>(null);
-  const [offlineVideoURLs, setOfflineVideoURLs] = useState<Record<string, string | null>>({});
-  const [uploadingVideos, setUploadingVideos] = useState<Record<string, boolean>>({});
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   const [selectedVideoForAnalysis, setSelectedVideoForAnalysis] = useState<string | null>(null);
+  const [videoLibraryOpen, setVideoLibraryOpen] = useState(false);
 
   const refreshOnlineVideos = useCallback(async () => {
     if (!athleteProfile) return;
@@ -53,11 +72,17 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
       for (const ex of EXERCISES) {
         try {
           const aadhar = getAadharForStorage();
-          const { data, error } = await supabase.storage.from('videos').list(`${aadhar}/${ex.key}`);
+          const prefix = `${aadhar}/${ex.key}`;
+          const { data, error } = await supabase.storage.from('videos').list(prefix);
           if (error) {
             console.error(`Supabase error for ${ex.key}:`, error.message, error);
           }
-          result[ex.key] = data || [];
+          const files = (data || []).map((f: any) => {
+            const filePath = `${prefix}/${f.name}`;
+            const { data: pub } = supabase.storage.from('videos').getPublicUrl(filePath);
+            return { ...f, path: filePath, publicUrl: pub.publicUrl };
+          });
+          result[ex.key] = files;
         } catch (err) {
           console.error(`Exception fetching videos for ${ex.key}:`, err);
           result[ex.key] = [];
@@ -141,7 +166,10 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
 
   useEffect(() => {
     const fetchProfile = async () => {
+      console.log("Fetching profile for session:", session);
+      
       if (!session?.user?.id) {
+        console.error("No session or user ID found");
         setError("User not logged in.");
         setIsLoading(false);
         return;
@@ -168,6 +196,7 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
       try {
         const networkStatus = await Network.getStatus();
         isOnline = networkStatus.connected;
+        console.log("Network status:", isOnline);
       } catch (e) {
         console.warn("Could not get network status, assuming offline.", e);
       }
@@ -175,7 +204,20 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
       if (!isOnline) {
         console.log("Offline mode: Skipping server fetch for profile.");
         if (!isProfileLoadedFromCache) {
-          setError("You are offline and no local data is available.");
+          // Create a basic profile from session metadata as fallback
+          console.log("Creating fallback profile from session metadata");
+          const fallbackProfile = {
+            id: session.user.id,
+            aadhar_card_number: session.user.user_metadata?.aadhaar_number || session.user.user_metadata?.aadhar_card_number || "000000000000",
+            name: session.user.user_metadata?.full_name || session.user.email || 'Athlete',
+            age: 25,
+            sport: 'General Fitness',
+            rank: 'Trainee',
+            imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || session.user.email || 'A')}`,
+            videoUrls: [],
+          };
+          setAthleteProfile(fallbackProfile);
+          localStorage.setItem(`athleteProfile-${session.user.id}`, JSON.stringify(fallbackProfile));
         }
         setIsLoading(false);
         return;
@@ -189,6 +231,8 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
           .select('*')
           .eq('id', session.user.id)
           .single();
+
+        console.log("Supabase response:", { data, error, status });
 
         if (error && status !== 406) {
           throw error;
@@ -209,12 +253,40 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
           setAthleteProfile(profileData);
           // 4. Update the cache
           localStorage.setItem(`athleteProfile-${session.user.id}`, JSON.stringify(profileData));
+        } else {
+          // No data found in database, create fallback profile
+          console.log("No profile found in database, creating fallback profile");
+          const fallbackProfile = {
+            id: session.user.id,
+            aadhar_card_number: session.user.user_metadata?.aadhaar_number || session.user.user_metadata?.aadhar_card_number || "000000000000",
+            name: session.user.user_metadata?.full_name || session.user.email || 'Athlete',
+            age: 25,
+            sport: 'General Fitness',
+            rank: 'Trainee',
+            imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || session.user.email || 'A')}`,
+            videoUrls: [],
+          };
+          setAthleteProfile(fallbackProfile);
+          localStorage.setItem(`athleteProfile-${session.user.id}`, JSON.stringify(fallbackProfile));
         }
       } catch (error: any) {
         console.error("Error fetching athlete profile:", error);
         if (!isProfileLoadedFromCache) {
-          setError(`Failed to fetch profile: ${error.message}`);
-          setAthleteProfile(null);
+          // Create fallback profile even on error
+          console.log("Creating fallback profile due to error");
+          const fallbackProfile = {
+            id: session.user.id,
+            aadhar_card_number: session.user.user_metadata?.aadhaar_number || session.user.user_metadata?.aadhar_card_number || "000000000000",
+            name: session.user.user_metadata?.full_name || session.user.email || 'Athlete',
+            age: 25,
+            sport: 'General Fitness',
+            rank: 'Trainee',
+            imageUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || session.user.email || 'A')}`,
+            videoUrls: [],
+          };
+          setAthleteProfile(fallbackProfile);
+          localStorage.setItem(`athleteProfile-${session.user.id}`, JSON.stringify(fallbackProfile));
+          setError(`Profile loaded with limited data: ${error.message}`);
         } else {
           console.warn("Could not refresh profile, showing cached data.", error.message);
           toast("Couldn't refresh profile. Displaying offline data.");
@@ -227,80 +299,100 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
     fetchProfile();
   }, [session]);
 
-  const handleRecordToggle = async () => {
-    if (isRecording) {
-      setIsRecording(false);
-      stopRecording();
-    } else {
-      setIsRecording(true);
-      startRecording();
-    }
-  };
+  // const handleRecordToggle = async () => { // This function is removed
+  //   if (isRecording) {
+  //     setIsRecording(false);
+  //     stopRecording();
+  //   } else {
+  //     setIsRecording(true);
+  //     startRecording();
+  //   }
+  // };
 
-  const startRecording = async () => {
-    const hasPermissions = await requestStoragePermissions();
-    if (!hasPermissions) {
-      toast.error('Storage permissions are required to record videos.');
-      return;
-    }
+  // const startRecording = async () => {
+  //   setError(null);
+  //   setShowCameraPreview(true);
+  //   const hasPermissions = await requestStoragePermissions();
+  //   if (!hasPermissions) {
+  //     setError('Storage permissions are required to record videos.');
+  //     setShowCameraPreview(false);
+  //     return;
+  //   }
+  //   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  //     setError('MediaDevices API is not supported in your browser.');
+  //     setShowCameraPreview(false);
+  //     return;
+  //   }
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({
+  //       video: { facingMode: 'user' },
+  //       audio: true,
+  //     });
+  //     if (videoRef.current) {
+  //       videoRef.current.srcObject = stream;
+  //       videoRef.current.muted = true;
+  //       await videoRef.current.play();
+  //     }
+  //     mediaRecorderRef.current = new MediaRecorder(stream);
+  //     mediaRecorderRef.current.ondataavailable = handleDataAvailable;
+  //     mediaRecorderRef.current.onstop = handleStop;
+  //     mediaRecorderRef.current.start();
+  //     timerRef.current = setInterval(() => {}, 1000);
+  //   } catch (error) {
+  //     setError('Failed to access camera. Please check your browser permissions and ensure no other app is using the camera.');
+  //     setShowCameraPreview(false);
+  //     return;
+  //   }
+  // };
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast.error('MediaDevices API is not supported in your browser.');
-      return;
-    }
+  // const stopRecording = () => {
+  //   if (mediaRecorderRef.current) {
+  //     mediaRecorderRef.current.stop();
+  //   }
+  //   if (videoRef.current && videoRef.current.srcObject) {
+  //     const stream = videoRef.current.srcObject as MediaStream;
+  //     stream.getTracks().forEach(track => track.stop());
+  //     videoRef.current.srcObject = null;
+  //   }
+  //   if (timerRef.current) {
+  //     clearInterval(timerRef.current);
+  //   }
+  //   setShowCameraPreview(false);
+  // };
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
-        audio: true,
-      });
+  // const handleDataAvailable = (event: BlobEvent) => {
+  //   if (event.data.size > 0) {
+  //     recordedChunksRef.current.push(event.data);
+  //   }
+  // };
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        await videoRef.current.play();
-      }
-
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = handleDataAvailable;
-      mediaRecorderRef.current.onstop = handleStop;
-      mediaRecorderRef.current.start();
-
-      timerRef.current = setInterval(() => {
-      }, 1000);
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast.error('Failed to access camera. Please check your browser permissions.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-    }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  };
-
-  const handleDataAvailable = (event: BlobEvent) => {
-    if (event.data.size > 0) {
-      recordedChunksRef.current.push(event.data);
-    }
-  };
-
-  const handleStop = () => {
-    const blob = new Blob(recordedChunksRef.current, {
-      type: 'video/webm',
-    });
-    URL.createObjectURL(blob);
-    recordedChunksRef.current = [];
-  };
+  // const handleStop = async () => {
+  //   const blob = new Blob(recordedChunksRef.current, {
+  //     type: 'video/webm',
+  //   });
+  //   recordedChunksRef.current = [];
+  //   if (!athleteProfile || !selectedExercise) {
+  //     setUploadMessage('Missing athlete or exercise info.');
+  //     return;
+  //   }
+  //   setUploading(true);
+  //   setUploadMessage(null);
+  //   try {
+  //     const aadhar = getAadharForStorage();
+  //     const fileName = `${aadhar}-${selectedExercise}-${Date.now()}.webm`;
+  //     const filePath = `${aadhar}/${selectedExercise}/${fileName}`;
+  //     const { error: uploadError } = await supabase.storage
+  //       .from('videos')
+  //       .upload(filePath, blob);
+  //     if (uploadError) throw uploadError;
+  //     setUploadMessage('Video uploaded successfully!');
+  //     await refreshOnlineVideos();
+  //   } catch (err: any) {
+  //     setUploadMessage('Error uploading video: ' + (err.message || err.toString()));
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchAllOnline = async () => {
@@ -337,78 +429,78 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
     fetchAllOnline();
   }, [athleteProfile]);
 
-  const uploadVideo = async (video: any) => {
-    if (!athleteProfile) {
-      toast.error('Profile not loaded yet. Cannot upload video.');
-      return;
-    }
-    const hasPermissions = await requestStoragePermissions();
-    if (!hasPermissions) {
-      toast.error('Storage permissions are required to upload videos.');
-      return;
-    }
+  // const uploadVideo = async (video: any) => { // This function is removed
+  //   if (!athleteProfile) {
+  //     toast.error('Profile not loaded yet. Cannot upload video.');
+  //     return;
+  //   }
+  //   const hasPermissions = await requestStoragePermissions();
+  //   if (!hasPermissions) {
+  //     toast.error('Storage permissions are required to upload videos.');
+  //     return;
+  //   }
 
-    setUploadingVideos(prev => ({ ...prev, [video.path]: true }));
+  //   setUploadingVideos(prev => ({ ...prev, [video.path]: true }));
 
-    try {
-      const file = await Filesystem.readFile({
-        path: video.path,
-        directory: Directory.Documents,
-      });
+  //   try {
+  //     const file = await Filesystem.readFile({
+  //       path: video.path,
+  //       directory: Directory.Documents,
+  //     });
 
-      const buffer = Uint8Array.from(atob(file.data as string), c => c.charCodeAt(0));
-      const blob = new Blob([buffer], { type: 'video/webm' });
+  //     const buffer = Uint8Array.from(atob(file.data as string), c => c.charCodeAt(0));
+  //     const blob = new Blob([buffer], { type: 'video/webm' });
 
-      if (!videoScreen) {
-        toast.error("No exercise selected for upload.");
-        setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
-        return;
-      }
+  //     if (!videoScreen) {
+  //       toast.error("No exercise selected for upload.");
+  //       setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
+  //       return;
+  //     }
 
-        const aadhar = getAadharForStorage();
-        const { data, error } = await supabase.storage
-          .from('videos')
-          .upload(`${aadhar}/${videoScreen.exercise}/${video.fileName}`, blob, {
-            contentType: 'video/webm',
-          });
+  //       const aadhar = getAadharForStorage();
+  //       const { data, error } = await supabase.storage
+  //         .from('videos')
+  //         .upload(`${aadhar}/${videoScreen.exercise}/${video.fileName}`, blob, {
+  //           contentType: 'video/webm',
+  //         });
 
-      if (error) {
-        console.error("Error uploading video:", error);
-        toast.error(`Upload failed: ${error.message}`);
-        setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
-        return;
-      }
+  //     if (error) {
+  //       console.error("Error uploading video:", error);
+  //       toast.error(`Upload failed: ${error.message}`);
+  //       setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
+  //       return;
+  //     }
 
-      console.log("Video uploaded successfully:", data);
-      toast.success("Video uploaded successfully!");
+  //     console.log("Video uploaded successfully:", data);
+  //     toast.success("Video uploaded successfully!");
 
-      const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
-      const updatedPendingVideos = pendingVideos.filter((v: any) => v.path !== video.path);
-      localStorage.setItem("pendingVideos", JSON.stringify(updatedPendingVideos));
+  //     const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
+  //     const updatedPendingVideos = pendingVideos.filter((v: any) => v.path !== video.path);
+  //     localStorage.setItem("pendingVideos", JSON.stringify(updatedPendingVideos));
 
-      await Filesystem.deleteFile({
-        path: video.path,
-        directory: Directory.Documents,
-      });
+  //     await Filesystem.deleteFile({
+  //       path: video.path,
+  //       directory: Directory.Documents,
+  //     });
 
-      await refreshOnlineVideos();
-      await refreshOfflineVideos();
-      setOfflineVideos(prev => ({
-        ...prev,
-        [videoScreen.exercise]: prev[videoScreen.exercise].filter(v => v.path !== video.path),
-      }));
-      setOfflineVideoURLs(prev => {
-        const { [video.path]: _, ...rest } = prev;
-        return rest;
-      });
-    } catch (e: any) {
-      console.error("Error during upload process:", e);
-      toast.error(`Upload failed: ${e.message}`);
-      setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
-    } finally {
-      setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
-    }
-  };
+  //     await refreshOnlineVideos();
+  //     await refreshOfflineVideos();
+  //     setOfflineVideos(prev => ({
+  //       ...prev,
+  //       [videoScreen.exercise]: prev[videoScreen.exercise].filter(v => v.path !== video.path),
+  //     }));
+  //     setOfflineVideoURLs(prev => {
+  //       const { [video.path]: _, ...rest } = prev;
+  //       return rest;
+  //     });
+  //   } catch (e: any) {
+  //     console.error("Error during upload process:", e);
+  //     toast.error(`Upload failed: ${e.message}`);
+  //     setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
+  //   } finally {
+  //     setUploadingVideos(prev => ({ ...prev, [video.path]: false }));
+  //   }
+  // };
 
   const loadOfflineVideoURLs = useCallback(async () => {
     if (!videoScreen || videoScreen.type !== "offline" || !athleteProfile) {
@@ -435,7 +527,7 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
         urls[v.path] = null;
       }
     }
-    setOfflineVideoURLs(urls);
+    // setOfflineVideoURLs(urls); // This state variable is removed
     console.log("Offline video URLs:", urls);
   }, [videoScreen, athleteProfile]);
 
@@ -466,7 +558,7 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
         urls[v.path] = null;
       }
     }
-    setOfflineVideoURLs(urls);
+    // setOfflineVideoURLs(urls); // This state variable is removed
     console.log("Initial Offline video URLs:", urls);
   }, [videoScreen, athleteProfile]);
 
@@ -552,52 +644,60 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
     }
 
     try {
-      // Get the public URL of the selected video
       if (!athleteProfile) {
         setError("Profile not loaded.");
         setIsLoading(false);
         return;
       }
-  const aadhar = getAadharForStorage();
-  const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(`${aadhar}/${selectedVideoForAnalysis}`);
+      const aadhar = getAadharForStorage();
+      const [exercise, fileName] = selectedVideoForAnalysis.split('/') as [string, string];
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(`${aadhar}/${exercise}/${fileName}`);
 
-      // For online videos, use the video URL directly
-      await analyzePerformance(athleteData, publicUrl);
+      const result = await analyzeVideo(publicUrl, exercise as any);
+      setAnalysisResults({
+        exercise,
+        total_reps: result.totalReps,
+        posture_score: result.postureScore,
+        avg_confidence: result.avgConfidence,
+        duration_sec: result.durationSec,
+        notes: result.notes || []
+      });
     } catch (error: any) {
       console.error("Error analyzing video:", error);
       setError(`Failed to analyze video: ${error.message}`);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setError("No video selected.");
-      return;
-    }
+  // const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => { // This function is removed
+  //   const file = event.target.files?.[0];
+  //   if (!file) {
+  //     setError("No video selected.");
+  //     return;
+  //   }
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64Video = reader.result?.toString().split(',')[1];
-      if (!base64Video) {
-        setError("Failed to read video file.");
-        return;
-      }
+  //   const reader = new FileReader();
+  //   reader.readAsDataURL(file);
+  //   reader.onload = async () => {
+  //     const base64Video = reader.result?.toString().split(',')[1];
+  //     if (!base64Video) {
+  //       setError("Failed to read video file.");
+  //       return;
+  //     }
 
-      const athleteData = {
-        total_distance: 1000,
-        sprint_count: 5,
-        average_speed: 7.5,
-      };
+  //     const athleteData = {
+  //       total_distance: 1000,
+  //       sprint_count: 5,
+  //       average_speed: 7.5,
+  //     };
 
-      await analyzePerformance(athleteData, base64Video);
-    };
-    reader.onerror = () => {
-      setError("Error reading video file.");
-    };
-  };
+  //     await analyzePerformance(athleteData, base64Video);
+  //   };
+  //   reader.onerror = () => {
+  //     setError("Error reading video file.");
+  //   };
+  // };
 
   const handleLogout = async () => {
     try {
@@ -606,6 +706,45 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
     } catch (error) {
       console.error("Error during logout:", error);
       toast.error("Failed to logout. Please try again.");
+    }
+  };
+
+  const handleSubmitToAdmin = async (exerciseKey: string, file: any) => {
+    try {
+      if (!athleteProfile) {
+        toast.error('Profile not loaded.');
+        return;
+      }
+      const aadhar = getAadharForStorage();
+      const filePath = file.path || `${aadhar}/${exerciseKey}/${file.name}`;
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
+
+      toast('Analyzing video before submission...');
+      const analysis = await analyzeVideo(publicUrl, exerciseKey as any);
+
+      const payload = {
+        athlete_id: athleteProfile.id,
+        athlete_aadhar: aadhar,
+        athlete_name: athleteProfile.name,
+        athlete_age: athleteProfile.age,
+        athlete_sport: athleteProfile.sport,
+        exercise: exerciseKey,
+        video_path: filePath,
+        video_url: publicUrl,
+        analysis_total_reps: analysis.totalReps,
+        analysis_posture_score: analysis.postureScore,
+        analysis_avg_confidence: analysis.avgConfidence,
+        analysis_duration_sec: analysis.durationSec,
+        analysis_notes: analysis.notes || [],
+        created_at: new Date().toISOString(),
+      } as any;
+
+      const { error } = await supabase.from('admin_submissions').insert(payload);
+      if (error) throw error;
+      toast.success('Submitted to admin with analysis.');
+    } catch (e: any) {
+      console.error('Submit to admin failed:', e);
+      toast.error(`Failed to submit: ${e.message || e.toString()}`);
     }
   };
 
@@ -628,7 +767,10 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
           )}
           {activeTab === "videos" && (
             <div>
-              <h2 className="text-2xl font-semibold mb-4">Exercises</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold">Exercises</h2>
+                <Button onClick={async () => { await refreshOnlineVideos(); await refreshOfflineVideos(); setVideoLibraryOpen(true); }}>Open Library</Button>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {EXERCISES.map(ex => (
                   <Card key={ex.key} className="flex flex-col justify-between">
@@ -642,27 +784,28 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
                           variant="outline"
                           className="ml-2"
                           onClick={() => {
+                            if (!athleteProfile) {
+                              setError('Profile not loaded. Please try again.');
+                              return;
+                            }
+                            if (!ex.key) {
+                              setError('Exercise not selected. Please try again.');
+                              return;
+                            }
+                            setError(null);
                             setShowCamera(true);
                             setSelectedExercise(ex.key);
+                            console.log('Opening camera overlay for', ex.key);
                           }}
                         >
                           Record
                         </Button>
                       </div>
                       <div className="flex gap-2 mt-4">
-                        <Button
-                          variant="secondary"
-                          onClick={() => setVideoScreen({ type: "online", exercise: ex.key })}
-                        >
+                        <Button onClick={() => { setVideoScreen({ type: "online", exercise: ex.key }); refreshOnlineVideos(); }}>
                           Online Videos
                         </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setVideoScreen({ type: "offline", exercise: ex.key });
-                            console.log("Video screen set to offline:", { type: "offline", exercise: ex.key });
-                          }}
-                        >
+                        <Button onClick={() => { setVideoScreen({ type: "offline", exercise: ex.key }); refreshOfflineVideos(); }}>
                           Offline Videos
                         </Button>
                       </div>
@@ -670,6 +813,8 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
                   </Card>
                 ))}
               </div>
+
+              {/* inline videos section removed; using modal overlay below */}
             </div>
           )}
           {activeTab === "settings" && (
@@ -693,7 +838,7 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
                  {/* Add a dropdown to select a video for analysis */}
                  <select
                    value={selectedVideoForAnalysis || ""}
-                   onChange={(e) => setSelectedVideoForAnalysis(e.target.value)}
+                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedVideoForAnalysis(e.target.value)}
                    className="w-full p-2 border rounded mb-4"
                  >
                    <option value="">Select a video for analysis</option>
@@ -715,28 +860,20 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
 
                  {analysisResults && (
                    <div className="mt-4">
-                     {analysisResults.cheat_probability !== null && (
-                       <div className="mb-2">
-                         <h3 className="text-lg font-semibold">Cheat Detection</h3>
-                         <p>
-                           Cheat Probability:{" "}
-                           <span className={analysisResults.cheat_probability > 0.5 ? "text-red-500" : "text-green-500"}>
-                             {analysisResults.cheat_probability.toFixed(2)}
-                           </span>
-                         </p>
-                         {analysisResults.cheat_probability > 0.5 && (
-                           <p className="text-sm text-red-500">Warning: High probability of cheating detected.</p>
-                         )}
-                       </div>
-                     )}
-
-                     {analysisResults.pose_estimation && (
-                       <div>
-                         <h3 className="text-lg font-semibold">Pose Analysis</h3>
-                         <p>
-                           Pose Estimation Results:{" "}
-                           <pre>{JSON.stringify(analysisResults.pose_estimation, null, 2)}</pre>
-                         </p>
+                     <h3 className="text-lg font-semibold">Analysis Summary</h3>
+                     <div className="text-sm text-gray-800 space-y-1">
+                       <div>Exercise: {(analysisResults.exercise || '').toString()}</div>
+                       <div>Total Reps: {analysisResults.total_reps}</div>
+                       <div>Posture Score: {analysisResults.posture_score}/100</div>
+                       <div>Confidence: {(analysisResults.avg_confidence * 100).toFixed(1)}%</div>
+                       <div>Duration: {analysisResults.duration_sec}s</div>
+                     </div>
+                     {Array.isArray(analysisResults.notes) && analysisResults.notes.length > 0 && (
+                       <div className="mt-2">
+                         <h4 className="font-semibold">Feedback</h4>
+                         <ul className="list-disc pl-5 text-sm">
+                           {analysisResults.notes.map((n: string, i: number) => (<li key={i}>{n}</li>))}
+                         </ul>
                        </div>
                      )}
                    </div>
@@ -754,111 +891,101 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
           athleteId={getAadharForStorage()}
           exerciseKey={selectedExercise}
           onVideoUploaded={refreshOnlineVideos}
-          onOfflineVideoAdded={refreshOfflineVideos} // Add this prop
+          onOfflineVideoAdded={async () => { await refreshOfflineVideos(); if (videoScreen?.type === "offline") { setVideoScreen({ ...videoScreen }); } }}
         />
       )}
-      <button
-        onClick={handleRecordToggle}
-        className={`rounded-full w-20 h-20 flex items-center justify-center border-4 border-white shadow-lg transition-colors duration-200 ${
-          isRecording ? "bg-red-600" : "bg-white"
-        }`}
-      >
-        <span
-          className={`block rounded-full ${
-            isRecording ? "bg-red-700 w-8 h-8" : "bg-gray-400 w-12 h-12"
-          } transition-all duration-200`}
-        />
-      </button>
+
       {videoScreen && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-xl font-bold">
-              {EXERCISES.find(e => e.key === videoScreen.exercise)?.label} - {videoScreen.type === "online" ? "Online" : "Offline"} Videos
-            </h2>
-            <Button onClick={() => setVideoScreen(null)}>Back</Button>
-          </div>
-          <div className="flex-1 overflow-auto p-4">
-            {videoScreen.type === "online" ? (
-              (onlineVideos[videoScreen.exercise] || []).length === 0 ? (
-                <p className="text-gray-500">No online videos found.</p>
-              ) : (
-                (onlineVideos[videoScreen.exercise] || []).map(v => {
-                  const publicUrl = athleteProfile
-                    ? supabase.storage.from('videos').getPublicUrl(`${getAadharForStorage()}/${videoScreen.exercise}/${v.name}`).data.publicUrl
-                    : '';
-                  console.log('Online video public URL:', publicUrl, 'for', v.name);
-                  return (
-                    <div key={v.name} className="relative mb-8">
-                      <button
-                        className="absolute top-0 right-0 m-2 p-2 bg-red-600 text-white rounded-full shadow hover:bg-red-700 z-10"
-                        title="Delete video"
-                        onClick={async () => {
-                          if (!athleteProfile) return;
-                          const aadhar = getAadharForStorage();
-                          const filePath = `${aadhar}/${videoScreen.exercise}/${v.name}`;
-                          const { error } = await supabase.storage.from('videos').remove([filePath]);
-                          if (error) {
-                            toast.error('Failed to delete video: ' + error.message);
-                          } else {
-                            toast.success('Video deleted successfully');
-                            await refreshOnlineVideos();
-                          }
-                        }}
-                        aria-label="Delete video"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      <video
-                        src={publicUrl}
-                        controls
-                        className="mb-4 w-full max-w-md"
-                        onError={(e) => console.error("Video loading error:", e)}
-                      />
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+          <div className="bg-white rounded shadow-xl w-full max-w-2xl max-h-[80vh] overflow-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-bold">
+                {EXERCISES.find(e => e.key === videoScreen.exercise)?.label} - {videoScreen.type === "online" ? "Online" : "Offline"} Videos
+              </h2>
+              <Button onClick={() => setVideoScreen(null)}>Close</Button>
+            </div>
+            <div className="p-4 space-y-3">
+              {videoScreen.type === "online" ? (
+                (onlineVideos[videoScreen.exercise] || []).length === 0 ? (
+                  <p className="text-gray-500">No online videos found.</p>
+                ) : (
+                  (onlineVideos[videoScreen.exercise] || []).map((v: any) => (
+                    <div key={v.name} className="p-2 border rounded">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm break-all">{v.name}</span>
+                        <a
+                          href={v.publicUrl || v.url || '#'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Open
+                        </a>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" onClick={() => handleSubmitToAdmin(videoScreen.exercise, v)}>Submit to Admin</Button>
+                      </div>
                     </div>
-                  );
-                })
-              )
-            ) : (
-              (offlineVideos[videoScreen.exercise] || []).length === 0 ? (
-                <p className="text-gray-500">No offline videos found.</p>
+                  ))
+                )
               ) : (
-                (offlineVideos[videoScreen.exercise] || []).map(v => (
-                  <div key={v.path} className="mb-4">
-                    {offlineVideoURLs[v.path] ? (
-                      <>
-                        <p>Video URL: {offlineVideoURLs[v.path]}</p> {/* Add this line */}
-                        <video
-                          src={offlineVideoURLs[v.path] || ''}
-                          controls
-                          className="w-full max-w-md"
-                        />
-                      </>
-                    ) : (
-                      <span className="block mb-2 text-red-500">Could not load video: {v.fileName}</span>
-                    )}
-                    <Button
-                      variant="secondary"
-                      disabled={uploadingVideos[v.path]}
-                      onClick={() => uploadVideo(v)}
-                    >
-                      {uploadingVideos[v.path] ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                ))
-              )
-            )}
+                (offlineVideos[videoScreen.exercise] || []).length === 0 ? (
+                  <p className="text-gray-500">No offline videos saved.</p>
+                ) : (
+                  (offlineVideos[videoScreen.exercise] || []).map((v: any, idx: number) => (
+                    <div key={`${v.fileName}-${idx}`} className="p-2 border rounded">
+                      <div className="text-sm font-medium break-all">{v.fileName}</div>
+                      <div className="text-xs text-gray-500 break-all">{v.path}</div>
+                    </div>
+                  ))
+                )
+              )}
+            </div>
           </div>
         </div>
       )}
-      <input
-        type="file"
-        accept="video/*"
-        onChange={handleVideoUpload}
-        style={{ display: 'none' }} // Hide the input
-        ref={videoInputRef}
-      />
+      {videoLibraryOpen && (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-xl font-bold">Video Library</h2>
+            <Button onClick={() => setVideoLibraryOpen(false)}>Close</Button>
+          </div>
+          <div className="flex-1 overflow-auto p-4 space-y-6">
+            {EXERCISES.map(ex => (
+              <Card key={`lib-${ex.key}`}>
+                <CardHeader>
+                  <CardTitle>{ex.label}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-3 font-semibold">Online</div>
+                  {(onlineVideos[ex.key] || []).length === 0 ? (
+                    <p className="text-gray-500 mb-4">No online videos.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {(onlineVideos[ex.key] || []).map((v: any) => (
+                        <video key={v.name} controls className="w-full rounded border">
+                          <source src={v.publicUrl || v.url} type="video/webm" />
+                        </video>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mb-3 font-semibold">Offline</div>
+                  {(offlineVideos[ex.key] || []).length === 0 ? (
+                    <p className="text-gray-500">No offline videos.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {(offlineVideos[ex.key] || []).map((v: any, idx: number) => (
+                        <OfflineVideoPlayer key={`${v.fileName}-${idx}`} path={v.path} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
