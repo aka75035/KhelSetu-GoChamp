@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { useHumanDetection } from "../../hooks/useHumanDetection";
+import { HumanDetectionOverlay } from "../HumanDetectionOverlay";
 
 interface CameraOverlayProps {
   onClose: () => void;
@@ -27,20 +29,73 @@ export default function CameraOverlay({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [timer, setTimer] = useState(0);
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const [humanDetected, setHumanDetected] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment');
+  const [countingEnabled, setCountingEnabled] = useState(false);
+  const [hasUserStartedCounting, setHasUserStartedCounting] = useState(false);
 
-  // Start camera on mount
+  // Human detection hook
+  const { isModelLoaded, detectionResult, isDetecting, exerciseCount, resetCounter } = useHumanDetection(videoRef, {
+    enablePoseDetection: true,
+    enableObjectDetection: true,
+    detectionThreshold: 0.5,
+    exerciseType: exerciseKey,
+    countingEnabled,
+    onDetectionChange: (result) => {
+      setHumanDetected(result.isHumanDetected);
+    }
+  });
+
+  // Start camera on mount and whenever facing changes
   useEffect(() => {
     let stream: MediaStream;
     (async () => {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      videoRef.current!.srcObject = stream;
-      streamRef.current = stream;
-      videoRef.current!.play().catch(() => {});
+        try {
+            console.log("Requesting camera access...", cameraFacing);
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false,
+            });
+            console.log("Camera stream obtained:", stream);
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                streamRef.current = stream;
+                await videoRef.current.play();
+                console.log("Camera stream assigned to video element.");
+            } else {
+                console.error("Video element reference is null.");
+            }
+        } catch (error: any) {
+            console.error("Error accessing the camera:", error);
+            if (error.name === "NotAllowedError") {
+                alert(
+                    "Camera access is required to record videos. Please enable permissions in your browser or device settings."
+                );
+            } else if (error.name === "NotFoundError") {
+                alert("No camera devices were found. Please connect a camera and try again.");
+            } else {
+                alert("An unexpected error occurred while accessing the camera. Please try again.");
+            }
+            onClose();
+        }
     })();
     return () => {
-      if (stream) stream.getTracks().forEach(track => track.stop());
+        if (stream) {
+            console.log("Stopping camera stream...");
+            stream.getTracks().forEach(track => track.stop());
+        }
     };
-  }, []);
+  }, [onClose, cameraFacing]);
+
+  const switchCamera = () => {
+    // Stop current stream and toggle facing, effect will restart stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setCameraFacing(prev => (prev === 'user' ? 'environment' : 'user'));
+  };
 
   const handleRecord = () => {
     if (!isRecording && streamRef.current) {
@@ -55,17 +110,39 @@ export default function CameraOverlay({
         }
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(recordedChunks.current, { type: "video/webm" });
         console.log("Recorded blob size:", blob.size);
         const url = URL.createObjectURL(blob);
         setVideoUrl(url);
-        setShowSavePrompt(true);
+        // Auto-save offline
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = async () => {
+            const base64Data = reader.result as string;
+            const fileName = `exercise_${Date.now()}.webm`;
+            const path = `videos/${athleteId}/${exerciseKey}/${fileName}`;
+            await Filesystem.writeFile({ path, data: base64Data, directory: Directory.Documents, recursive: true });
+            const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
+            pendingVideos.push({ athleteAadhar: athleteId, exerciseKey, fileName, path });
+            localStorage.setItem("pendingVideos", JSON.stringify(pendingVideos));
+            // Refresh offline list in parent immediately
+            onOfflineVideoAdded();
+          };
+        } catch (e) {
+          console.error("Auto-save error:", e);
+        }
+        // Optionally still show preview, but skip forcing Save dialog
+        setShowSavePrompt(false);
       };
 
       recorder.start();
       setIsRecording(true);
       setTimer(0);
+      resetCounter();
+      setCountingEnabled(true);
+      setHasUserStartedCounting(true);
       timerInterval.current = setInterval(() => setTimer((prev) => prev + 1), 1000);
     } else if (isRecording && mediaRecorderRef.current) {
       console.log("Stopping recording...");
@@ -74,6 +151,8 @@ export default function CameraOverlay({
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
       }
+      setCountingEnabled(false);
+      setHasUserStartedCounting(false);
     }
   };
 
@@ -148,6 +227,8 @@ export default function CameraOverlay({
   };
 
   return (
+  <>
+  
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       <video
         ref={videoRef}
@@ -156,11 +237,28 @@ export default function CameraOverlay({
         className="flex-1 object-cover w-full"
         style={{ background: "#000" }}
       />
-      {/* Timer on top left */}
-      <div className="absolute top-6 left-6 bg-black bg-opacity-60 rounded px-3 py-1 flex items-center">
+      {/* Exercise Type Label */}
+      <div className="absolute top-6 left-6 bg-blue-700 bg-opacity-80 text-white px-4 py-2 rounded text-lg font-bold shadow-lg z-20">
+        {exerciseKey.charAt(0).toUpperCase() + exerciseKey.slice(1)}
+      </div>
+      
+      {/* Exercise Count Display */}
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-90 text-white px-6 py-3 rounded-full text-2xl font-bold shadow-lg z-20">
+        Count: {exerciseCount}
+      </div>
+      {/* Timer on top left (move to top right) */}
+      <div className="absolute top-6 right-6 bg-black bg-opacity-60 rounded px-3 py-1 flex items-center z-20">
         {isRecording && <span className="w-2 h-2 rounded-full bg-red-600 mr-2 animate-pulse"></span>}
         <span className="text-white font-mono text-lg">{formatTimer(timer)}</span>
       </div>
+
+      {/* Human Detection Overlay (always visible) */}
+      <HumanDetectionOverlay
+        detectionResult={detectionResult}
+        videoRef={videoRef}
+        isModelLoaded={isModelLoaded}
+        isDetecting={isDetecting}
+      />
       {/* Record/Stop button */}
       <div className="absolute bottom-8 left-0 w-full flex justify-center">
         <button
@@ -176,6 +274,14 @@ export default function CameraOverlay({
           />
         </button>
       </div>
+      {/* Camera Switch button (front/back) */}
+      <button
+        onClick={switchCamera}
+        className="absolute bottom-8 right-6 bg-black bg-opacity-60 text-white px-4 py-2 rounded"
+        aria-label="Switch camera"
+      >
+        {cameraFacing === 'user' ? 'Rear Cam' : 'Front Cam'}
+      </button>
       {/* Close button */}
       <button
         onClick={() => {
@@ -216,6 +322,8 @@ export default function CameraOverlay({
         </div>
       )}
     </div>
+    </>
   );
+  
 }
 
