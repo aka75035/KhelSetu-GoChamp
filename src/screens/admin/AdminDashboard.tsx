@@ -50,7 +50,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [submissions, setSubmissions] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchAthletes = async () => {
       setIsLoading(true);
@@ -59,9 +60,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         .from('profiles')
         .select('*')
         .eq('role', 'athlete');
-
       if (error) {
-        console.error("Error fetching athletes:", error);
         setError("Could not fetch athlete data.");
         setAthletes([]);
       } else {
@@ -78,8 +77,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       }
       setIsLoading(false);
     };
-
     fetchAthletes();
+    // Fetch admin submissions
+    const fetchSubmissions = async () => {
+      const { data, error } = await supabase
+        .from('admin_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) setSubmissions(data);
+    };
+    fetchSubmissions();
   }, []);
 
   const handleUpdateAthlete = (updatedAthlete: Athlete) => {
@@ -120,7 +127,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
       <Header title="Admin Dashboard" onLogout={handleLogout} />
       <main style={{paddingTop: '75px'}} className="pb-20"> {/* Padding top for header, padding bottom for footer */}
         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -157,6 +164,47 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </main>
       <BottomNav />
+      <div className="max-w-4xl mx-auto mt-8">
+        <h2 className="text-2xl font-bold mb-4">Athlete Submissions</h2>
+        {submissions.length === 0 ? (
+          <p>No submissions yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {submissions.map((submission) => (
+              <Card key={submission.id} className="p-4">
+                <CardHeader>
+                  <CardTitle>{submission.athlete_name} ({submission.athlete_aadhar})</CardTitle>
+                  <div className="text-sm text-gray-500">{submission.exercise} | {new Date(submission.created_at).toLocaleString()}</div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-2">
+                    <strong>Performance:</strong>
+                    <ul className="list-disc ml-6">
+                      <li>Total Reps: {submission.analysis_total_reps}</li>
+                      <li>Posture Score: {submission.analysis_posture_score}</li>
+                      <li>Avg Confidence: {submission.analysis_avg_confidence}</li>
+                      <li>Duration (sec): {submission.analysis_duration_sec}</li>
+                    </ul>
+                  </div>
+                  {submission.analysis_notes && submission.analysis_notes.length > 0 && (
+                    <div className="mb-2">
+                      <strong>Notes:</strong>
+                      <ul className="list-disc ml-6">
+                        {submission.analysis_notes.map((note: string, idx: number) => (
+                          <li key={idx}>{note}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {submission.video_url && (
+                    <video src={submission.video_url} controls className="w-full aspect-video rounded-md mt-2" />
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

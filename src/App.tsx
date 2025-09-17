@@ -459,7 +459,8 @@ export function AthleteProfilePage({ athlete, onBack, showBackButton = true, onS
                 <video 
                   className="w-full h-full object-cover"
                   controls 
-                  src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+                  src="././Assets\Exercise_Video_for_Good_Posture.mp4"
+                  muted
                 >
                   Your browser does not support the video tag.
                 </video>
@@ -792,7 +793,7 @@ function AthleteDashboardPage({ onLogout, session }: { onLogout: () => void; ses
         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">{getHeaderText()}</h1>
-            <Button variant="destructive" onClick={onLogout}>Logout</Button>
+            <Button variant="destructive" onClick={onLogout} className="mb-4">Logout</Button>
           </div>
           {renderContent()}
         </div>

@@ -63,12 +63,23 @@ export default function PythonMLCameraOverlay({
     let stream: MediaStream;
     (async () => {
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      videoRef.current!.srcObject = stream;
-      streamRef.current = stream;
-      videoRef.current!.play().catch(() => {});
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch (err) {
+          if (!(err && err.name === "AbortError")) {
+            console.error("Error playing video:", err);
+          }
+        }
+        streamRef.current = stream;
+      }
     })();
     return () => {
       if (stream) stream.getTracks().forEach(track => track.stop());
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
     };
   }, []);
 
@@ -121,7 +132,7 @@ export default function PythonMLCameraOverlay({
       reader.onloadend = async () => {
         const base64Data = reader.result as string;
         const fileName = `exercise_${Date.now()}.webm`;
-        const path = `videos/${athleteId}/${exerciseKey}/${fileName}`;
+        const path = `offline_videos/${athleteId}/${exerciseKey}/${fileName}`;
 
         // 1. Save the video file locally
         await Filesystem.writeFile({

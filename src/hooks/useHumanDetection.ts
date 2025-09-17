@@ -24,6 +24,9 @@ export interface UseHumanDetectionOptions {
   exerciseType?: string;
   onDetectionChange?: (result: HumanDetectionResult) => void;
   countingEnabled?: boolean;
+  processInterval?: number; // ms between heavy inference passes
+  maxInputSize?: number;    // max width/height fed to models
+  modelType?: 'lightning' | 'thunder'; // MoveNet variant
 }
 
 export const useHumanDetection = (
@@ -36,7 +39,10 @@ export const useHumanDetection = (
     detectionThreshold = 0.5,
     exerciseType = 'pushups',
     onDetectionChange,
-    countingEnabled = false
+    countingEnabled = false,
+    processInterval = 120,
+    maxInputSize = 640,
+    modelType = 'lightning'
   } = options;
 
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -64,6 +70,8 @@ export const useHumanDetection = (
   // Throttle emissions to the React state to reduce lag
   const lastEmitTsRef = useRef<number>(0);
   const EMIT_INTERVAL_MS = 100;
+  // Throttle expensive model calls
+  const lastProcessTsRef = useRef<number>(0);
 
   const resetCounter = () => {
     setExerciseCount(0);
@@ -131,7 +139,11 @@ export const useHumanDetection = (
         setExerciseCount(prev => prev + 1);
       }
     } else {
-      // In transition
+      // In transition: if we've left the up position, allow a new rep cycle
+      if (isUpPositionRef.current) {
+        isUpPositionRef.current = false;
+        isDownPositionRef.current = false;
+      }
       consecutiveDownRef.current = 0;
       consecutiveUpRef.current = 0;
     }
@@ -219,7 +231,9 @@ export const useHumanDetection = (
         if (enablePoseDetection) {
           models.push(
             poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
-              modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+              modelType: modelType === 'thunder'
+                ? poseDetection.movenet.modelType.SINGLEPOSE_THUNDER
+                : poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
             })
           );
         }
@@ -252,7 +266,7 @@ export const useHumanDetection = (
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [enablePoseDetection, enableObjectDetection]);
+  }, [enablePoseDetection, enableObjectDetection, modelType]);
 
   // Detection loop
   useEffect(() => {
@@ -277,21 +291,31 @@ export const useHumanDetection = (
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+        // Downscale to improve speed while preserving aspect ratio
+        const srcW = video.videoWidth;
+        const srcH = video.videoHeight;
+        const scale = Math.min(1, maxInputSize / Math.max(srcW, srcH));
+        const dstW = Math.max(1, Math.round(srcW * scale));
+        const dstH = Math.max(1, Math.round(srcH * scale));
+        if (canvas.width !== dstW || canvas.height !== dstH) {
+          canvas.width = dstW;
+          canvas.height = dstH;
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, dstW, dstH);
 
         let humanDetected = false;
         let poseKeypoints: any[] = [];
         let boundingBox: any = null;
         let confidence = 0;
 
+        // Respect processing interval for heavy inference
+        const nowProcess = performance.now();
+        const shouldProcess = nowProcess - lastProcessTsRef.current >= processInterval;
+
         // Pose detection
-        if (poseDetectorRef.current) {
+        if (poseDetectorRef.current && shouldProcess) {
           try {
-            const poses = await poseDetectorRef.current.estimatePoses(video);
+            const poses = await poseDetectorRef.current.estimatePoses(canvas);
             if (poses.length > 0) {
               humanDetected = true;
               poseKeypoints = poses[0].keypoints;
@@ -308,15 +332,16 @@ export const useHumanDetection = (
                 }
               }
             }
+              lastProcessTsRef.current = nowProcess;
           } catch (error) {
             console.warn('Pose detection error:', error);
           }
         }
 
         // Object detection for person class
-        if (objectDetectorRef.current && !humanDetected) {
+        if (objectDetectorRef.current && !humanDetected && shouldProcess) {
           try {
-            const predictions = await objectDetectorRef.current.detect(video);
+            const predictions = await objectDetectorRef.current.detect(canvas);
             const personPrediction = predictions.find(p => p.class === 'person' && p.score >= detectionThreshold);
             
             if (personPrediction) {
@@ -328,6 +353,7 @@ export const useHumanDetection = (
                 height: personPrediction.bbox[3]
               };
               confidence = personPrediction.score;
+              lastProcessTsRef.current = nowProcess;
             }
           } catch (error) {
             console.warn('Object detection error:', error);
@@ -374,7 +400,7 @@ export const useHumanDetection = (
       setIsDetecting(false);
       isDetectingRef.current = false;
     };
-  }, [isModelLoaded, videoRef, detectionThreshold, exerciseType, countingEnabled]);
+  }, [isModelLoaded, videoRef, detectionThreshold, exerciseType, countingEnabled, processInterval, maxInputSize]);
 
   return {
     isModelLoaded,

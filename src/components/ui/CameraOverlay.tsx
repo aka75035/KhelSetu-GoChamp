@@ -41,6 +41,10 @@ export default function CameraOverlay({
     detectionThreshold: 0.5,
     exerciseType: exerciseKey,
     countingEnabled,
+    // Faster, more stable defaults for mobile
+    processInterval: 120,
+    maxInputSize: 640,
+    modelType: 'lightning',
     onDetectionChange: (result) => {
       setHumanDetected(result.isHumanDetected);
     }
@@ -60,9 +64,14 @@ export default function CameraOverlay({
 
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
+                try {
+                    await videoRef.current.play();
+                } catch (err) {
+                    if (!(err && err.name === "AbortError")) {
+                        console.error("Error playing video:", err);
+                    }
+                }
                 streamRef.current = stream;
-                await videoRef.current.play();
-                console.log("Camera stream assigned to video element.");
             } else {
                 console.error("Video element reference is null.");
             }
@@ -84,6 +93,9 @@ export default function CameraOverlay({
         if (stream) {
             console.log("Stopping camera stream...");
             stream.getTracks().forEach(track => track.stop());
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
         }
     };
   }, [onClose, cameraFacing]);
@@ -122,7 +134,7 @@ export default function CameraOverlay({
           reader.onloadend = async () => {
             const base64Data = reader.result as string;
             const fileName = `exercise_${Date.now()}.webm`;
-            const path = `videos/${athleteId}/${exerciseKey}/${fileName}`;
+            const path = `offline_videos/${athleteId}/${exerciseKey}/${fileName}`;
             await Filesystem.writeFile({ path, data: base64Data, directory: Directory.Documents, recursive: true });
             const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
             pendingVideos.push({ athleteAadhar: athleteId, exerciseKey, fileName, path });

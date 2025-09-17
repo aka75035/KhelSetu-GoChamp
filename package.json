@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@awesome-cordova-plugins/android-permissions": "^8.1.0",
+    "@awesome-cordova-plugins/core": "^8.1.0",
     "@capacitor/android": "^7.4.3",
     "@capacitor/cli": "^7.4.3",
     "@capacitor/core": "^7.4.3",
