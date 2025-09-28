@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "एथलीटफ्लो",
+    "tagline": "AI-संचालित प्रदर्शन परीक्षण",
+    "subtitle": "उन्नत गति विश्लेषण"
+  },
+  "loading": {
+    "initializing": "प्रारंभ कर रहे हैं...",
+    "loadingAiModels": "AI मॉडल लोड कर रहे हैं...",
+    "connectingToCloud": "क्लाउड से जुड़ रहे हैं...",
+    "settingUpAnalytics": "प्रदर्शन एनालिटिक्स सेटअप कर रहे हैं...",
+    "preparingVideoAnalysis": "वीडियो विश्लेषण तैयार कर रहे हैं...",
+    "readyToGo": "तैयार है!",
+    "progress": "प्रगति"
+  },
+  "roleSelection": {
+    "welcome": "एथलीटफ्लो में आपका स्वागत है",
+    "chooseRole": "शुरू करने के लिए अपनी भूमिका चुनें",
+    "iAmAthlete": "मैं एक एथलीट हूं",
+    "trackPerformance": "अपना प्रदर्शन ट्रैक करें",
+    "iAmAdmin": "मैं एक एडमिन हूं",
+    "manageAthletes": "एथलीटों का प्रबंधन करें",
+    "tryDemo": "मानव पहचान डेमो आज़माएं",
+    "experienceAi": "AI विश्लेषण का अनुभव करें",
+    "poweredBy": "उन्नत AI तकनीक द्वारा संचालित",
+    "realTimeAnalysis": "रियल-टाइम विश्लेषण",
+    "cloudSync": "क्लाउड सिंक",
+    "performanceTracking": "प्रदर्शन ट्रैकिंग"
+  },
+  "auth": {
+    "welcomeBack": "वापस स्वागत है!",
+    "joinToday": "आज ही एथलीटफ्लो में शामिल हों",
+    "adminLogin": "एडमिन लॉगिन",
+    "athleteLogin": "एथलीट लॉगिन",
+    "createAdminAccount": "एडमिन खाता बनाएं",
+    "createAthleteAccount": "एथलीट खाता बनाएं",
+    "fullName": "पूरा नाम",
+    "mobileNumber": "मोबाइल नंबर",
+    "aadhaarNumber": "आधार कार्ड नंबर",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "showPassword": "दिखाएं",
+    "hidePassword": "छुपाएं",
+    "signIn": "साइन इन करें",
+    "createAccount": "खाता बनाएं",
+    "processing": "प्रसंस्करण...",
+    "dontHaveAccount": "खाता नहीं है?",
+    "alreadyHaveAccount": "पहले से खाता है?",
+    "createNewAccount": "नया खाता बनाएं",
+    "signInInstead": "इसके बजाय साइन इन करें",
+    "successMessage": "सफलता! कृपया पुष्टि लिंक के लिए अपना ईमेल जांचें।",
+    "continueToLogin": "बहुत बढ़िया! अब आपको लॉगिन पेज पर ले जाया जाएगा जहां आप साइन इन कर सकते हैं या नया खाता बना सकते हैं।"
+  },
+  "profile": {
+    "backToDashboard": "डैशबोर्ड पर वापस जाएं",
+    "editProfile": "प्रोफाइल संपादित करें",
+    "saveChanges": "परिवर्तन सहेजें",
+    "cancel": "रद्द करें",
+    "age": "आयु",
+    "rank": "रैंक",
+    "status": "स्थिति",
+    "active": "सक्रिय",
+    "performanceOverTime": "समय के साथ प्रदर्शन",
+    "trackProgress": "अपनी प्रगति और सुधार को ट्रैक करें",
+    "latestAnalysisVideo": "नवीनतम विश्लेषण वीडियो",
+    "reviewPerformance": "अपने सबसे हाल के प्रदर्शन विश्लेषण की समीक्षा करें"
+  },
+  "demo": {
+    "humanDetectionDemo": "मानव पहचान डेमो",
+    "backToHome": "होम पर वापस जाएं"
+  },
+  "features": {
+    "aiAnalysis": "AI विश्लेषण",
+    "cloudSync": "क्लाउड सिंक",
+    "performance": "प्रदर्शन"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "warning": "चेतावनी",
+    "info": "जानकारी",
+    "continue": "जारी रखें",
+    "tip": "सुझाव",
+    "voiceEnabled": "वॉइस गाइडेंस सक्षम। मैं आपको ऐप में नेविगेट करने में मदद करूंगा।",
+    "voiceGuidanceActive": "वॉइस गाइडेंस सक्रिय",
+    "voiceGuidanceHelp": "मैं आपको ऐप में नेविगेट करने में मदद करूंगा"
+  },
+  "languageSelection": {
+    "title": "अपनी भाषा चुनें",
+    "subtitle": "ऐप के लिए अपनी पसंदीदा भाषा चुनें",
+    "voiceTip": "चरण-दर-चरण सहायता के लिए वॉइस गाइडेंस सक्षम करें",
+    "languageSaved": "आपकी भाषा प्राथमिकता भविष्य के दौरे के लिए सहेजी जाएगी"
+  }
+}

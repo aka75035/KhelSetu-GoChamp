@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "অ্যাথলেটফ্লো",
+    "tagline": "AI-চালিত পারফরম্যান্স টেস্টিং",
+    "subtitle": "উন্নত গতি বিশ্লেষণ"
+  },
+  "loading": {
+    "initializing": "আরম্ভ হচ্ছে...",
+    "loadingAiModels": "AI মডেল লোড হচ্ছে...",
+    "connectingToCloud": "ক্লাউডে সংযোগ হচ্ছে...",
+    "settingUpAnalytics": "পারফরম্যান্স অ্যানালিটিক্স সেটআপ হচ্ছে...",
+    "preparingVideoAnalysis": "ভিডিও বিশ্লেষণ প্রস্তুত হচ্ছে...",
+    "readyToGo": "প্রস্তুত!",
+    "progress": "অগ্রগতি"
+  },
+  "roleSelection": {
+    "welcome": "অ্যাথলেটফ্লোতে স্বাগতম",
+    "chooseRole": "শুরু করতে আপনার ভূমিকা নির্বাচন করুন",
+    "iAmAthlete": "আমি একজন অ্যাথলেট",
+    "trackPerformance": "আমার পারফরম্যান্স ট্র্যাক করুন",
+    "iAmAdmin": "আমি একজন অ্যাডমিন",
+    "manageAthletes": "অ্যাথলেটদের পরিচালনা করুন",
+    "tryDemo": "মানব সনাক্তকরণ ডেমো চেষ্টা করুন",
+    "experienceAi": "AI বিশ্লেষণের অভিজ্ঞতা নিন",
+    "poweredBy": "উন্নত AI প্রযুক্তি দ্বারা চালিত",
+    "realTimeAnalysis": "রিয়েল-টাইম বিশ্লেষণ",
+    "cloudSync": "ক্লাউড সিঙ্ক",
+    "performanceTracking": "পারফরম্যান্স ট্র্যাকিং"
+  },
+  "auth": {
+    "welcomeBack": "ফিরে স্বাগতম!",
+    "joinToday": "আজই অ্যাথলেটফ্লোতে যোগ দিন",
+    "adminLogin": "অ্যাডমিন লগইন",
+    "athleteLogin": "অ্যাথলেট লগইন",
+    "createAdminAccount": "অ্যাডমিন অ্যাকাউন্ট তৈরি করুন",
+    "createAthleteAccount": "অ্যাথলেট অ্যাকাউন্ট তৈরি করুন",
+    "fullName": "পূর্ণ নাম",
+    "mobileNumber": "মোবাইল নম্বর",
+    "aadhaarNumber": "আধার কার্ড নম্বর",
+    "email": "ইমেইল",
+    "password": "পাসওয়ার্ড",
+    "showPassword": "দেখান",
+    "hidePassword": "লুকান",
+    "signIn": "সাইন ইন করুন",
+    "createAccount": "অ্যাকাউন্ট তৈরি করুন",
+    "processing": "প্রক্রিয়াকরণ...",
+    "dontHaveAccount": "অ্যাকাউন্ট নেই?",
+    "alreadyHaveAccount": "ইতিমধ্যে অ্যাকাউন্ট আছে?",
+    "createNewAccount": "নতুন অ্যাকাউন্ট তৈরি করুন",
+    "signInInstead": "পরিবর্তে সাইন ইন করুন",
+    "successMessage": "সফল! অনুগ্রহ করে নিশ্চিতকরণ লিঙ্কের জন্য আপনার ইমেইল চেক করুন।"
+  },
+  "profile": {
+    "backToDashboard": "ড্যাশবোর্ডে ফিরে যান",
+    "editProfile": "প্রোফাইল সম্পাদনা করুন",
+    "saveChanges": "পরিবর্তন সংরক্ষণ করুন",
+    "cancel": "বাতিল করুন",
+    "age": "বয়স",
+    "rank": "র্যাঙ্ক",
+    "status": "অবস্থা",
+    "active": "সক্রিয়",
+    "performanceOverTime": "সময়ের সাথে পারফরম্যান্স",
+    "trackProgress": "আপনার অগ্রগতি এবং উন্নতি ট্র্যাক করুন",
+    "latestAnalysisVideo": "সর্বশেষ বিশ্লেষণ ভিডিও",
+    "reviewPerformance": "আপনার সাম্প্রতিক পারফরম্যান্স বিশ্লেষণের পর্যালোচনা করুন"
+  },
+  "demo": {
+    "humanDetectionDemo": "মানব সনাক্তকরণ ডেমো",
+    "backToHome": "হোমে ফিরে যান"
+  },
+  "features": {
+    "aiAnalysis": "AI বিশ্লেষণ",
+    "cloudSync": "ক্লাউড সিঙ্ক",
+    "performance": "পারফরম্যান্স"
+  },
+  "common": {
+    "loading": "লোড হচ্ছে...",
+    "error": "ত্রুটি",
+    "success": "সফল",
+    "warning": "সতর্কতা",
+    "info": "তথ্য"
+  }
+}

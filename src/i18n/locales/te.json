@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "అథ్లీట్ఫ్లో",
+    "tagline": "AI-ఆధారిత పనితీరు పరీక్ష",
+    "subtitle": "అధునాతన కదలిక విశ్లేషణ"
+  },
+  "loading": {
+    "initializing": "ప్రారంభిస్తోంది...",
+    "loadingAiModels": "AI మోడల్స్ లోడ్ అవుతోంది...",
+    "connectingToCloud": "క్లౌడ్‌తో కనెక్ట్ అవుతోంది...",
+    "settingUpAnalytics": "పనితీరు విశ్లేషణ సెటప్ అవుతోంది...",
+    "preparingVideoAnalysis": "వీడియో విశ్లేషణ సిద్ధం చేస్తోంది...",
+    "readyToGo": "సిద్ధం!",
+    "progress": "పురోగతి"
+  },
+  "roleSelection": {
+    "welcome": "అథ్లీట్ఫ్లోకి స్వాగతం",
+    "chooseRole": "ప్రారంభించడానికి మీ పాత్రను ఎంచుకోండి",
+    "iAmAthlete": "నేను ఒక అథ్లీట్",
+    "trackPerformance": "నా పనితీరును ట్రాక్ చేయండి",
+    "iAmAdmin": "నేను ఒక అడ్మిన్",
+    "manageAthletes": "అథ్లీట్లను నిర్వహించండి",
+    "tryDemo": "మానవ గుర్తింపు డెమో ప్రయత్నించండి",
+    "experienceAi": "AI విశ్లేషణను అనుభవించండి",
+    "poweredBy": "అధునాతన AI సాంకేతికతతో శక్తివంతం",
+    "realTimeAnalysis": "రియల్-టైమ్ విశ్లేషణ",
+    "cloudSync": "క్లౌడ్ సింక్",
+    "performanceTracking": "పనితీరు ట్రాకింగ్"
+  },
+  "auth": {
+    "welcomeBack": "మళ్లీ స్వాగతం!",
+    "joinToday": "ఈరోజే అథ్లీట్ఫ్లోలో చేరండి",
+    "adminLogin": "అడ్మిన్ లాగిన్",
+    "athleteLogin": "అథ్లీట్ లాగిన్",
+    "createAdminAccount": "అడ్మిన్ ఖాతా సృష్టించండి",
+    "createAthleteAccount": "అథ్లీట్ ఖాతా సృష్టించండి",
+    "fullName": "పూర్తి పేరు",
+    "mobileNumber": "మొబైల్ నంబర్",
+    "aadhaarNumber": "ఆధార్ కార్డ్ నంబర్",
+    "email": "ఇమెయిల్",
+    "password": "పాస్‌వర్డ్",
+    "showPassword": "చూపించు",
+    "hidePassword": "దాచు",
+    "signIn": "సైన్ ఇన్ చేయండి",
+    "createAccount": "ఖాతా సృష్టించండి",
+    "processing": "ప్రాసెస్ అవుతోంది...",
+    "dontHaveAccount": "ఖాతా లేదా?",
+    "alreadyHaveAccount": "ఇప్పటికే ఖాతా ఉందా?",
+    "createNewAccount": "కొత్త ఖాతా సృష్టించండి",
+    "signInInstead": "బదులుగా సైన్ ఇన్ చేయండి",
+    "successMessage": "విజయం! దయచేసి నిర్ధారణ లింక్ కోసం మీ ఇమెయిల్‌ను తనిఖీ చేయండి."
+  },
+  "profile": {
+    "backToDashboard": "డాష్‌బోర్డ్‌కు తిరిగి వెళ్లండి",
+    "editProfile": "ప్రొఫైల్‌ను సవరించండి",
+    "saveChanges": "మార్పులను సేవ్ చేయండి",
+    "cancel": "రద్దు చేయండి",
+    "age": "వయస్సు",
+    "rank": "ర్యాంక్",
+    "status": "స్థితి",
+    "active": "క్రియాశీల",
+    "performanceOverTime": "కాలక్రమేణా పనితీరు",
+    "trackProgress": "మీ పురోగతి మరియు మెరుగుదలలను ట్రాక్ చేయండి",
+    "latestAnalysisVideo": "తాజా విశ్లేషణ వీడియో",
+    "reviewPerformance": "మీ ఇటీవలి పనితీరు విశ్లేషణను సమీక్షించండి"
+  },
+  "demo": {
+    "humanDetectionDemo": "మానవ గుర్తింపు డెమో",
+    "backToHome": "హోమ్‌కు తిరిగి వెళ్లండి"
+  },
+  "features": {
+    "aiAnalysis": "AI విశ్లేషణ",
+    "cloudSync": "క్లౌడ్ సింక్",
+    "performance": "పనితీరు"
+  },
+  "common": {
+    "loading": "లోడ్ అవుతోంది...",
+    "error": "లోపం",
+    "success": "విజయం",
+    "warning": "హెచ్చరిక",
+    "info": "సమాచారం"
+  }
+}

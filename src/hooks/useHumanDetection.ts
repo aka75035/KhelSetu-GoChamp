@@ -157,29 +157,51 @@ export const useHumanDetection = (
     const rightHip = poseKeypoints[12];
     const leftKnee = poseKeypoints[13];
     const rightKnee = poseKeypoints[14];
+    const leftAnkle = poseKeypoints[15];
+    const rightAnkle = poseKeypoints[16];
 
-    const keyPoints = [nose, leftHip, rightHip, leftKnee, rightKnee];
-    const visiblePoints = keyPoints.filter(point => point.score > 0.3);
-    
-    if (visiblePoints.length < 4) return;
+    const keyPoints = [nose, leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle];
+    const visiblePoints = keyPoints.filter(point => (point?.score || 0) > 0.2);
+    if (visiblePoints.length < 5) return;
 
     const avgHipY = (leftHip.y + rightHip.y) / 2;
     const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
-    const noseY = nose.y;
+    const avgAnkleY = (leftAnkle.y + rightAnkle.y) / 2;
 
-    // Situp detection logic
-    const isInDownPosition = noseY > avgHipY;
-    const isInUpPosition = noseY < avgHipY;
+    // Normalize torso height by leg length for robustness to camera distance
+    const legLength = Math.max(1, Math.abs(avgKneeY - avgAnkleY));
+    const noseToHip = Math.abs(nose.y - avgHipY);
+    const torsoRatio = noseToHip / legLength; // larger when lying down, smaller when sitting up
 
-    if (isInDownPosition && !isDownPositionRef.current) {
-      isDownPositionRef.current = true;
-    } else if (isInUpPosition && isDownPositionRef.current && !isUpPositionRef.current) {
-      isUpPositionRef.current = true;
-      setExerciseCount(prev => prev + 1);
-      console.log(`Situp count: ${exerciseCount + 1}`);
-    } else if (!isInUpPosition && isUpPositionRef.current) {
-      isUpPositionRef.current = false;
-      isDownPositionRef.current = false;
+    // Hysteresis thresholds
+    const DOWN_RATIO = 0.9; // lying down
+    const UP_RATIO = 0.6;   // torso closer to hips when up
+
+    const isInDownPosition = torsoRatio > DOWN_RATIO;
+    const isInUpPosition = torsoRatio < UP_RATIO;
+
+    if (isInDownPosition) {
+      consecutiveDownRef.current += 1;
+      consecutiveUpRef.current = 0;
+      if (consecutiveDownRef.current >= REQUIRED_FRAMES) {
+        isDownPositionRef.current = true;
+        isUpPositionRef.current = false;
+      }
+    } else if (isInUpPosition) {
+      consecutiveUpRef.current += 1;
+      if (isDownPositionRef.current && consecutiveUpRef.current >= REQUIRED_FRAMES && !isUpPositionRef.current) {
+        isUpPositionRef.current = true;
+        consecutiveDownRef.current = 0;
+        consecutiveUpRef.current = 0;
+        setExerciseCount(prev => prev + 1);
+      }
+    } else {
+      if (isUpPositionRef.current) {
+        isUpPositionRef.current = false;
+        isDownPositionRef.current = false;
+      }
+      consecutiveDownRef.current = 0;
+      consecutiveUpRef.current = 0;
     }
   };
 
@@ -218,12 +240,58 @@ export const useHumanDetection = (
     }
   };
 
+  const countSquats = (poseKeypoints: any[]) => {
+    if (poseKeypoints.length < 17) return;
+
+    const leftHip = poseKeypoints[11];
+    const rightHip = poseKeypoints[12];
+    const leftKnee = poseKeypoints[13];
+    const rightKnee = poseKeypoints[14];
+    const leftAnkle = poseKeypoints[15];
+    const rightAnkle = poseKeypoints[16];
+
+    const keyPoints = [leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle];
+    const visiblePoints = keyPoints.filter(point => point.score > 0.3);
+    
+    if (visiblePoints.length < 5) return;
+
+    const avgHipY = (leftHip.y + rightHip.y) / 2;
+    const avgKneeY = (leftKnee.y + rightKnee.y) / 2;
+    const avgAnkleY = (leftAnkle.y + rightAnkle.y) / 2;
+
+    // Squat detection logic: hip goes down relative to knees
+    const hipKneeDistance = Math.abs(avgHipY - avgKneeY);
+    const kneeAnkleDistance = Math.abs(avgKneeY - avgAnkleY);
+    
+    // Squat down: hip gets closer to knee level
+    const isInDownPosition = hipKneeDistance < kneeAnkleDistance * 0.6;
+    // Squat up: hip is well above knee level  
+    const isInUpPosition = hipKneeDistance > kneeAnkleDistance * 0.8;
+
+    if (isInDownPosition && !isDownPositionRef.current) {
+      isDownPositionRef.current = true;
+    } else if (isInUpPosition && isDownPositionRef.current && !isUpPositionRef.current) {
+      isUpPositionRef.current = true;
+      setExerciseCount(prev => prev + 1);
+      console.log(`Squat count: ${exerciseCount + 1}`);
+    } else if (!isInUpPosition && isUpPositionRef.current) {
+      isUpPositionRef.current = false;
+      isDownPositionRef.current = false;
+    }
+  };
+
   // Initialize TensorFlow.js and load models
   useEffect(() => {
     const initializeModels = async () => {
       try {
         // Set the backend to WebGL for better performance
         await tf.setBackend('webgl');
+        // Prefer lower power GPU for mobile stability
+        // @ts-ignore
+        tf.env().set('WEBGL_FORCE_F16_TEXTURES', true);
+        // Reduce shader precision requirements
+        // @ts-ignore
+        tf.env().set('WEBGL_RENDER_FLOAT32_CAPABLE', false);
         await tf.ready();
 
         const models: Promise<any>[] = [];
@@ -315,7 +383,7 @@ export const useHumanDetection = (
         // Pose detection
         if (poseDetectorRef.current && shouldProcess) {
           try {
-            const poses = await poseDetectorRef.current.estimatePoses(canvas);
+            const poses = await poseDetectorRef.current.estimatePoses(canvas, { flipHorizontal: false });
             if (poses.length > 0) {
               humanDetected = true;
               poseKeypoints = poses[0].keypoints;
@@ -329,6 +397,8 @@ export const useHumanDetection = (
                   countSitups(poseKeypoints);
                 } else if (exerciseType === 'pullups') {
                   countPullups(poseKeypoints);
+                } else if (exerciseType === 'squats') {
+                  countSquats(poseKeypoints);
                 }
               }
             }

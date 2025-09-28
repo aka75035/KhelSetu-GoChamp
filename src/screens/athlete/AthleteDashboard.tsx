@@ -16,9 +16,10 @@ import { Capacitor } from '@capacitor/core';
 import { analyzeVideo } from '../../lib/analyzeVideo';
 
 const EXERCISES = [
-  { key: "situps", label: "Situps" },
-  { key: "pullups", label: "Pullups" },
-  { key: "pushups", label: "Pushups" },
+  { key: "pushups", label: "Push-ups" },
+  { key: "situps", label: "Sit-ups" },
+  { key: "pullups", label: "Pull-ups" },
+  { key: "squats", label: "Squat Test" },
 ];
 
 function OfflineVideoPlayer({ path }: { path: string }) {
@@ -650,10 +651,35 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
         return;
       }
       const aadhar = getAadharForStorage();
-      const [exercise, fileName] = selectedVideoForAnalysis.split('/') as [string, string];
-      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(`${aadhar}/${exercise}/${fileName}`);
-
-      const result = await analyzeVideo(publicUrl, exercise as any);
+      const [type, exercise, fileNameOrIdx] = selectedVideoForAnalysis.split('/');
+      let videoUrl = null;
+      if (type === 'online') {
+        // Online video
+        const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(`${aadhar}/${exercise}/${fileNameOrIdx}`);
+        videoUrl = publicUrl;
+      } else if (type === 'offline') {
+        // Offline video
+        const offlineList = offlineVideos[exercise] || [];
+        // Try to find by fileName, fallback to index
+        let videoObj = offlineList.find((v: any) => v.fileName === fileNameOrIdx || v.name === fileNameOrIdx);
+        if (!videoObj && !isNaN(Number(fileNameOrIdx))) {
+          videoObj = offlineList[Number(fileNameOrIdx)];
+        }
+        if (!videoObj) throw new Error('Offline video not found');
+        // Read file from local storage
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const file = await Filesystem.readFile({ path: videoObj.path, directory: Directory.Documents });
+        const byteCharacters = atob(file.data as string);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'video/webm' });
+        videoUrl = URL.createObjectURL(blob);
+      }
+      if (!videoUrl) throw new Error('Could not get video URL');
+      const result = await analyzeVideo(videoUrl, exercise as any);
       setAnalysisResults({
         exercise,
         total_reps: result.totalReps,
@@ -768,50 +794,121 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
           {activeTab === "videos" && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold">Exercises</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Exercises</h2>
                 <Button onClick={async () => { await refreshOnlineVideos(); await refreshOfflineVideos(); setVideoLibraryOpen(true); }}>Open Library</Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {EXERCISES.map(ex => (
-                  <Card key={ex.key} className="flex flex-col justify-between">
-                    <CardHeader>
-                      <CardTitle>{ex.label}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-500">No recordings yet</span>
-                        <Button
-                          variant="outline"
-                          className="ml-2"
-                          onClick={() => {
-                            if (!athleteProfile) {
-                              setError('Profile not loaded. Please try again.');
-                              return;
-                            }
-                            if (!ex.key) {
-                              setError('Exercise not selected. Please try again.');
-                              return;
-                            }
-                            setError(null);
-                            setShowCamera(true);
-                            setSelectedExercise(ex.key);
-                            console.log('Opening camera overlay for', ex.key);
-                          }}
-                        >
-                          Record
-                        </Button>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button onClick={() => { setVideoScreen({ type: "online", exercise: ex.key }); refreshOnlineVideos(); }}>
-                          Online Videos
-                        </Button>
-                        <Button onClick={() => { setVideoScreen({ type: "offline", exercise: ex.key }); refreshOfflineVideos(); }}>
-                          Offline Videos
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {EXERCISES.map(ex => {
+                  const getGuidelines = (exerciseKey: string) => {
+                    switch (exerciseKey) {
+                      case 'pushups':
+                        return {
+                          title: 'Push-ups Test Guidelines',
+                          steps: [
+                            '📹 Position: Stand 3-6 feet from camera, full body visible',
+                            '🏃 Form: Start in plank position, hands shoulder-width apart',
+                            '⬇️ Down: Lower chest to ground, elbows at 90° angle',
+                            '⬆️ Up: Push back to starting position',
+                            '🎯 Count: Each down-up motion = 1 rep',
+                            '💡 Tip: Keep body straight, don\'t sag hips'
+                          ]
+                        };
+                      case 'situps':
+                        return {
+                          title: 'Sit-ups Test Guidelines',
+                          steps: [
+                            '📹 Position: Lie down, camera shows full body',
+                            '🏃 Form: Knees bent, feet flat, hands behind head',
+                            '⬆️ Up: Lift torso until nose passes hip level',
+                            '⬇️ Down: Lower back to starting position',
+                            '🎯 Count: Each up-down motion = 1 rep',
+                            '💡 Tip: Don\'t pull on neck, use core muscles'
+                          ]
+                        };
+                      case 'pullups':
+                        return {
+                          title: 'Pull-ups Test Guidelines',
+                          steps: [
+                            '📹 Position: Hang from bar, camera shows full body',
+                            '🏃 Form: Hands shoulder-width apart, palms facing away',
+                            '⬆️ Up: Pull until chin clears the bar',
+                            '⬇️ Down: Lower to full arm extension',
+                            '🎯 Count: Each up-down motion = 1 rep',
+                            '💡 Tip: Keep core tight, avoid swinging'
+                          ]
+                        };
+                      case 'squats':
+                        return {
+                          title: 'Squat Test Guidelines',
+                          steps: [
+                            '📹 Position: Stand 3-6 feet from camera, full body visible',
+                            '🏃 Form: Feet shoulder-width apart, toes slightly out',
+                            '⬇️ Down: Lower until hip goes below knee level',
+                            '⬆️ Up: Return to standing position',
+                            '🎯 Count: Each down-up motion = 1 rep',
+                            '💡 Tip: Keep chest up, knees track over toes'
+                          ]
+                        };
+                      default:
+                        return { title: 'Exercise Guidelines', steps: [] };
+                    }
+                  };
+
+                  const guidelines = getGuidelines(ex.key);
+
+                  return (
+                    <Card key={ex.key} className="flex flex-col justify-between bg-white border-gray-200">
+                      <CardHeader>
+                        <CardTitle className="text-gray-900 font-bold truncate" title={ex.label}>{ex.label}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Guidelines Section */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <h4 className="font-semibold text-blue-900 text-sm mb-2">{guidelines.title}</h4>
+                          <div className="space-y-1">
+                            {guidelines.steps.map((step, index) => (
+                              <div key={index} className="text-xs text-blue-800 leading-relaxed">
+                                {step}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">No recordings yet</span>
+                          <Button
+                            variant="outline"
+                            className="ml-2"
+                            onClick={() => {
+                              if (!athleteProfile) {
+                                setError('Profile not loaded. Please try again.');
+                                return;
+                              }
+                              if (!ex.key) {
+                                setError('Exercise not selected. Please try again.');
+                                return;
+                              }
+                              setError(null);
+                              setShowCamera(true);
+                              setSelectedExercise(ex.key);
+                              console.log('Opening camera overlay for', ex.key);
+                            }}
+                          >
+                            Record
+                          </Button>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button onClick={() => { setVideoScreen({ type: "online", exercise: ex.key }); refreshOnlineVideos(); }}>
+                            Online Videos
+                          </Button>
+                          <Button onClick={() => { setVideoScreen({ type: "offline", exercise: ex.key }); refreshOfflineVideos(); }}>
+                            Offline Videos
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
 
               {/* inline videos section removed; using modal overlay below */}
@@ -825,9 +922,9 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
             </div>
           )}
            <div className="container mx-auto p-4 pt-10 ">
-             <Card>
+             <Card className="bg-white">
                <CardHeader>
-                 <CardTitle>Performance Analysis</CardTitle>
+                 <CardTitle className="text-gray-900 font-bold">Performance Analysis</CardTitle>
                </CardHeader>
                <CardContent>
                  {/* Remove the captureAndAnalyze button */}
@@ -839,13 +936,22 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
                  <select
                    value={selectedVideoForAnalysis || ""}
                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedVideoForAnalysis(e.target.value)}
-                   className="w-full p-2 border rounded mb-4"
+                   className="w-full p-2 border rounded mb-4 bg-white text-gray-900"
                  >
                    <option value="">Select a video for analysis</option>
+                   {/* Online videos */}
                    {Object.entries(onlineVideos).map(([exercise, videos]) =>
                      (videos as any[]).map((video) => (
-                       <option key={video.name} value={`${exercise}/${video.name}`}>
-                         {exercise} - {video.name}
+                       <option key={`online-${exercise}-${video.name}`} value={`online/${exercise}/${video.name}`}>
+                         {exercise} (Online) - {video.name}
+                       </option>
+                     ))
+                   )}
+                   {/* Offline videos */}
+                   {Object.entries(offlineVideos).map(([exercise, videos]) =>
+                     (videos as any[]).map((video, idx) => (
+                       <option key={`offline-${exercise}-${video.fileName || video.name || idx}`} value={`offline/${exercise}/${video.fileName || video.name || idx}`}>
+                         {exercise} (Offline) - {video.fileName || video.name || idx}
                        </option>
                      ))
                    )}
@@ -860,8 +966,8 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
 
                  {analysisResults && (
                    <div className="mt-4">
-                     <h3 className="text-lg font-semibold">Analysis Summary</h3>
-                     <div className="text-sm text-gray-800 space-y-1">
+                     <h3 className="text-lg font-semibold text-gray-900">Analysis Summary</h3>
+                     <div className="text-sm text-gray-900 space-y-1">
                        <div>Exercise: {(analysisResults.exercise || '').toString()}</div>
                        <div>Total Reps: {analysisResults.total_reps}</div>
                        <div>Posture Score: {analysisResults.posture_score}/100</div>
@@ -870,8 +976,8 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
                      </div>
                      {Array.isArray(analysisResults.notes) && analysisResults.notes.length > 0 && (
                        <div className="mt-2">
-                         <h4 className="font-semibold">Feedback</h4>
-                         <ul className="list-disc pl-5 text-sm">
+                         <h4 className="font-semibold text-gray-900">Feedback</h4>
+                         <ul className="list-disc pl-5 text-sm text-gray-900">
                            {analysisResults.notes.map((n: string, i: number) => (<li key={i}>{n}</li>))}
                          </ul>
                        </div>
@@ -989,3 +1095,6 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
     </div>
   );
 }
+
+// Placeholder definition for Open component
+const Open = () => <span>Open</span>;

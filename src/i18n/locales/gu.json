@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "એથ્લીટફ્લો",
+    "tagline": "AI-ચાલિત પ્રદર્શન પરીક્ષણ",
+    "subtitle": "અદ્યતન ગતિ વિશ્લેષણ"
+  },
+  "loading": {
+    "initializing": "શરૂ કરી રહ્યું છે...",
+    "loadingAiModels": "AI મોડલ્સ લોડ થઈ રહ્યા છે...",
+    "connectingToCloud": "ક્લાઉડ સાથે જોડાઈ રહ્યું છે...",
+    "settingUpAnalytics": "પ્રદર્શન વિશ્લેષણ સેટઅપ થઈ રહ્યું છે...",
+    "preparingVideoAnalysis": "વિડિયો વિશ્લેષણ તૈયાર કરી રહ્યું છે...",
+    "readyToGo": "તૈયાર!",
+    "progress": "પ્રગતિ"
+  },
+  "roleSelection": {
+    "welcome": "એથ્લીટફ્લોમાં આપનું સ્વાગત છે",
+    "chooseRole": "શરૂ કરવા માટે તમારી ભૂમિકા પસંદ કરો",
+    "iAmAthlete": "હું એક એથ્લીટ છું",
+    "trackPerformance": "મારું પ્રદર્શન ટ્રેક કરો",
+    "iAmAdmin": "હું એક એડમિન છું",
+    "manageAthletes": "એથ્લીટ્સનું સંચાલન કરો",
+    "tryDemo": "માનવ શોધ ડેમો અજમાવો",
+    "experienceAi": "AI વિશ્લેષણનો અનુભવ લો",
+    "poweredBy": "અદ્યતન AI ટેક્નોલોજી દ્વારા ચાલિત",
+    "realTimeAnalysis": "રિયલ-ટાઇમ વિશ્લેષણ",
+    "cloudSync": "ક્લાઉડ સિંક",
+    "performanceTracking": "પ્રદર્શન ટ્રેકિંગ"
+  },
+  "auth": {
+    "welcomeBack": "પાછા સ્વાગત!",
+    "joinToday": "આજે જ એથ્લીટફ્લોમાં જોડાઓ",
+    "adminLogin": "એડમિન લોગિન",
+    "athleteLogin": "એથ્લીટ લોગિન",
+    "createAdminAccount": "એડમિન એકાઉન્ટ બનાવો",
+    "createAthleteAccount": "એથ્લીટ એકાઉન્ટ બનાવો",
+    "fullName": "પૂર્ણ નામ",
+    "mobileNumber": "મોબાઇલ નંબર",
+    "aadhaarNumber": "આધાર કાર્ડ નંબર",
+    "email": "ઇમેઇલ",
+    "password": "પાસવર્ડ",
+    "showPassword": "બતાવો",
+    "hidePassword": "છુપાવો",
+    "signIn": "સાઇન ઇન કરો",
+    "createAccount": "એકાઉન્ટ બનાવો",
+    "processing": "પ્રક્રિયા કરી રહ્યું છે...",
+    "dontHaveAccount": "એકાઉન્ટ નથી?",
+    "alreadyHaveAccount": "પહેલેથી એકાઉન્ટ છે?",
+    "createNewAccount": "નવું એકાઉન્ટ બનાવો",
+    "signInInstead": "તેના બદલે સાઇન ઇન કરો",
+    "successMessage": "સફળતા! કૃપા કરીને પુષ્ટિકરણ લિંક માટે તમારો ઇમેઇલ તપાસો."
+  },
+  "profile": {
+    "backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",
+    "editProfile": "પ્રોફાઇલ સંપાદિત કરો",
+    "saveChanges": "ફેરફારો સેવ કરો",
+    "cancel": "રદ કરો",
+    "age": "ઉંમર",
+    "rank": "રેન્ક",
+    "status": "સ્થિતિ",
+    "active": "સક્રિય",
+    "performanceOverTime": "સમય સાથે પ્રદર્શન",
+    "trackProgress": "તમારી પ્રગતિ અને સુધારાઓ ટ્રેક કરો",
+    "latestAnalysisVideo": "નવીનતમ વિશ્લેષણ વિડિયો",
+    "reviewPerformance": "તમારા તાજેતરના પ્રદર્શન વિશ્લેષણની સમીક્ષા કરો"
+  },
+  "demo": {
+    "humanDetectionDemo": "માનવ શોધ ડેમો",
+    "backToHome": "હોમ પર પાછા જાઓ"
+  },
+  "features": {
+    "aiAnalysis": "AI વિશ્લેષણ",
+    "cloudSync": "ક્લાઉડ સિંક",
+    "performance": "પ્રદર્શન"
+  },
+  "common": {
+    "loading": "લોડ થઈ રહ્યું છે...",
+    "error": "ભૂલ",
+    "success": "સફળતા",
+    "warning": "ચેતવણી",
+    "info": "માહિતી"
+  }
+}

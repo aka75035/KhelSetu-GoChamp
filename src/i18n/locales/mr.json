@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "अथलीटफ्लो",
+    "tagline": "AI-चालित कामगिरी चाचणी",
+    "subtitle": "प्रगत गती विश्लेषण"
+  },
+  "loading": {
+    "initializing": "सुरु करत आहे...",
+    "loadingAiModels": "AI मॉडेल लोड करत आहे...",
+    "connectingToCloud": "क्लाउडशी जोडत आहे...",
+    "settingUpAnalytics": "कामगिरी विश्लेषण सेटअप करत आहे...",
+    "preparingVideoAnalysis": "व्हिडिओ विश्लेषण तयार करत आहे...",
+    "readyToGo": "तयार!",
+    "progress": "प्रगती"
+  },
+  "roleSelection": {
+    "welcome": "अथलीटफ्लोमध्ये आपले स्वागत आहे",
+    "chooseRole": "सुरु करण्यासाठी आपली भूमिका निवडा",
+    "iAmAthlete": "मी एक अथलीट आहे",
+    "trackPerformance": "माझी कामगिरी ट्रॅक करा",
+    "iAmAdmin": "मी एक अॅडमिन आहे",
+    "manageAthletes": "अथलीट्सचे व्यवस्थापन करा",
+    "tryDemo": "मानव ओळख डेमो वापरून पहा",
+    "experienceAi": "AI विश्लेषणाचा अनुभव घ्या",
+    "poweredBy": "प्रगत AI तंत्रज्ञानाने चालवले",
+    "realTimeAnalysis": "रिअल-टाइम विश्लेषण",
+    "cloudSync": "क्लाउड सिंक",
+    "performanceTracking": "कामगिरी ट्रॅकिंग"
+  },
+  "auth": {
+    "welcomeBack": "पुन्हा स्वागत!",
+    "joinToday": "आजच अथलीटफ्लोमध्ये सामील व्हा",
+    "adminLogin": "अॅडमिन लॉगिन",
+    "athleteLogin": "अथलीट लॉगिन",
+    "createAdminAccount": "अॅडमिन खाते तयार करा",
+    "createAthleteAccount": "अथलीट खाते तयार करा",
+    "fullName": "पूर्ण नाव",
+    "mobileNumber": "मोबाइल नंबर",
+    "aadhaarNumber": "आधार कार्ड नंबर",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "showPassword": "दाखवा",
+    "hidePassword": "लपवा",
+    "signIn": "साइन इन करा",
+    "createAccount": "खाते तयार करा",
+    "processing": "प्रक्रिया करत आहे...",
+    "dontHaveAccount": "खाते नाही?",
+    "alreadyHaveAccount": "आधीपासून खाते आहे?",
+    "createNewAccount": "नवीन खाते तयार करा",
+    "signInInstead": "त्याऐवजी साइन इन करा",
+    "successMessage": "यश! कृपया पुष्टीकरण लिंकसाठी आपला ईमेल तपासा."
+  },
+  "profile": {
+    "backToDashboard": "डॅशबोर्डवर परत जा",
+    "editProfile": "प्रोफाइल संपादित करा",
+    "saveChanges": "बदल जतन करा",
+    "cancel": "रद्द करा",
+    "age": "वय",
+    "rank": "रँक",
+    "status": "स्थिती",
+    "active": "सक्रिय",
+    "performanceOverTime": "कालांतराने कामगिरी",
+    "trackProgress": "आपली प्रगती आणि सुधारणा ट्रॅक करा",
+    "latestAnalysisVideo": "नवीनतम विश्लेषण व्हिडिओ",
+    "reviewPerformance": "आपल्या अलीकडील कामगिरी विश्लेषणाचे पुनरावलोकन करा"
+  },
+  "demo": {
+    "humanDetectionDemo": "मानव ओळख डेमो",
+    "backToHome": "होमवर परत जा"
+  },
+  "features": {
+    "aiAnalysis": "AI विश्लेषण",
+    "cloudSync": "क्लाउड सिंक",
+    "performance": "कामगिरी"
+  },
+  "common": {
+    "loading": "लोड होत आहे...",
+    "error": "त्रुटी",
+    "success": "यश",
+    "warning": "चेतावनी",
+    "info": "माहिती"
+  }
+}

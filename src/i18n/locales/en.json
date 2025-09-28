@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "AthleteFlow",
+    "tagline": "AI-Powered Performance Testing",
+    "subtitle": "Advanced Motion Analysis"
+  },
+  "loading": {
+    "initializing": "Initializing...",
+    "loadingAiModels": "Loading AI Models...",
+    "connectingToCloud": "Connecting to Cloud...",
+    "settingUpAnalytics": "Setting up Performance Analytics...",
+    "preparingVideoAnalysis": "Preparing Video Analysis...",
+    "readyToGo": "Ready to Go!",
+    "progress": "Progress"
+  },
+  "roleSelection": {
+    "welcome": "Welcome to AthleteFlow",
+    "chooseRole": "Choose your role to get started",
+    "iAmAthlete": "I am an Athlete",
+    "trackPerformance": "Track my performance",
+    "iAmAdmin": "I am an Admin",
+    "manageAthletes": "Manage athletes",
+    "tryDemo": "Try Human Detection Demo",
+    "experienceAi": "Experience AI analysis",
+    "poweredBy": "Powered by advanced AI technology",
+    "realTimeAnalysis": "Real-time Analysis",
+    "cloudSync": "Cloud Sync",
+    "performanceTracking": "Performance Tracking"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back!",
+    "joinToday": "Join AthleteFlow today",
+    "adminLogin": "Admin Login",
+    "athleteLogin": "Athlete Login",
+    "createAdminAccount": "Create Admin Account",
+    "createAthleteAccount": "Create Athlete Account",
+    "fullName": "Full Name",
+    "mobileNumber": "Mobile Number",
+    "aadhaarNumber": "Aadhaar Card Number",
+    "email": "Email",
+    "password": "Password",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "signIn": "Sign In",
+    "createAccount": "Create Account",
+    "processing": "Processing...",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "createNewAccount": "Create New Account",
+    "signInInstead": "Sign In Instead",
+    "successMessage": "Success! Please check your email for a confirmation link.",
+    "continueToLogin": "Great! Now you will be taken to the login page where you can sign in or create a new account."
+  },
+  "profile": {
+    "backToDashboard": "Back to Dashboard",
+    "editProfile": "Edit Profile",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "age": "Age",
+    "rank": "Rank",
+    "status": "Status",
+    "active": "Active",
+    "performanceOverTime": "Performance Over Time",
+    "trackProgress": "Track your progress and improvements",
+    "latestAnalysisVideo": "Latest Analysis Video",
+    "reviewPerformance": "Review your most recent performance analysis"
+  },
+  "demo": {
+    "humanDetectionDemo": "Human Detection Demo",
+    "backToHome": "Back to Home"
+  },
+  "features": {
+    "aiAnalysis": "AI Analysis",
+    "cloudSync": "Cloud Sync",
+    "performance": "Performance"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "continue": "Continue",
+    "tip": "Tip",
+    "voiceEnabled": "Voice guidance enabled. I will help you navigate through the app.",
+    "voiceGuidanceActive": "Voice Guidance Active",
+    "voiceGuidanceHelp": "I'll help you navigate through the app"
+  },
+  "languageSelection": {
+    "title": "Choose Your Language",
+    "subtitle": "Select your preferred language for the app",
+    "voiceTip": "Enable voice guidance for step-by-step assistance",
+    "languageSaved": "Your language preference will be saved for future visits"
+  }
+}

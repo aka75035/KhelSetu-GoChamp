@@ -139,6 +139,8 @@ export default function CameraOverlay({
             const pendingVideos = JSON.parse(localStorage.getItem("pendingVideos") || "[]");
             pendingVideos.push({ athleteAadhar: athleteId, exerciseKey, fileName, path });
             localStorage.setItem("pendingVideos", JSON.stringify(pendingVideos));
+            // Debug log: print current pendingVideos
+            console.log("[DEBUG] pendingVideos after save:", JSON.parse(localStorage.getItem("pendingVideos") || "[]"));
             // Refresh offline list in parent immediately
             onOfflineVideoAdded();
           };
@@ -202,11 +204,53 @@ export default function CameraOverlay({
         });
         localStorage.setItem("pendingVideos", JSON.stringify(pendingVideos));
 
-        alert("Video saved locally. It will be uploaded when an internet connection is available.");
-        
-        // 3. Notify parent components to refresh their views
-        onOfflineVideoAdded(); // Refresh the offline videos list immediately
-        onClose(); // Close the camera overlay
+        // 3. Try to upload to Supabase immediately if online
+        let uploaded = false;
+        try {
+          // Check network status (Capacitor or browser)
+          let isOnline = true;
+          if (window && (window as any).Capacitor && (window as any).Capacitor.isNativePlatform) {
+            const { Network } = await import('@capacitor/network');
+            const status = await Network.getStatus();
+            isOnline = status.connected;
+          } else if (navigator && 'onLine' in navigator) {
+            isOnline = navigator.onLine;
+          }
+          if (isOnline) {
+            // Convert base64 to Blob for upload
+            const base64 = base64Data.split(',')[1];
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const uploadBlob = new Blob([byteArray], { type: 'video/webm' });
+            const uploadPath = `${athleteId}/${exerciseKey}/${fileName}`;
+            const { error } = await supabase.storage.from('videos').upload(uploadPath, uploadBlob, { upsert: false, contentType: 'video/webm' });
+            if (!error) {
+              uploaded = true;
+              // Remove from pendingVideos after upload
+              const updatedPending = JSON.parse(localStorage.getItem("pendingVideos") || "[]").filter((v: any) => v.path !== path);
+              localStorage.setItem("pendingVideos", JSON.stringify(updatedPending));
+              // Optionally delete local file after upload (if you want to save space)
+              // await Filesystem.deleteFile({ path, directory: Directory.Documents });
+              // Refresh online list in parent
+              if (typeof onVideoUploaded === 'function') onVideoUploaded();
+              alert('Video uploaded to Supabase!');
+            } else {
+              console.error('Upload to Supabase failed:', error.message);
+            }
+          }
+        } catch (e) {
+          console.error('Error during upload to Supabase:', e);
+        }
+        if (!uploaded) {
+          alert("Video saved locally. It will be uploaded when an internet connection is available.");
+        }
+        // 4. Refresh offline list in parent immediately
+        onOfflineVideoAdded();
+        onClose();
       };
 
     } catch (e) {
@@ -250,9 +294,12 @@ export default function CameraOverlay({
         style={{ background: "#000" }}
       />
       {/* Exercise Type Label */}
-      <div className="absolute top-6 left-6 bg-blue-700 bg-opacity-80 text-white px-4 py-2 rounded text-lg font-bold shadow-lg z-20">
-        {exerciseKey.charAt(0).toUpperCase() + exerciseKey.slice(1)}
+      {/* Map exercise keys to readable labels */}
+      {(() => { const label = exerciseKey === 'pushups' ? 'Push-ups' : exerciseKey === 'situps' ? 'Sit-ups' : exerciseKey === 'pullups' ? 'Pull-ups' : exerciseKey === 'squats' ? 'Squat Test' : exerciseKey; return (
+      <div className="absolute top-6 left-6 bg-black bg-opacity-70 text-white px-4 py-2 rounded text-lg font-bold shadow-lg ring-1 ring-white/30 z-20">
+        {label}
       </div>
+      ); })()}
       
       {/* Exercise Count Display */}
       <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-90 text-white px-6 py-3 rounded-full text-2xl font-bold shadow-lg z-20">
@@ -294,15 +341,16 @@ export default function CameraOverlay({
       >
         {cameraFacing === 'user' ? 'Rear Cam' : 'Front Cam'}
       </button>
-      {/* Close button */}
+      {/* Close button (high-contrast, always on top) */}
       <button
         onClick={() => {
           cleanupStream();
           onClose();
         }}
-        className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-4 py-2 rounded"
+        className="absolute right-4 top-4 z-40 rounded-full bg-white/90 text-black px-4 py-2 shadow-xl ring-1 ring-black/10 hover:bg-white"
+        aria-label="Close camera"
       >
-        Close
+        ✕ Close
       </button>
       {/* Save/Discard Prompt */}
       {showSavePrompt && (

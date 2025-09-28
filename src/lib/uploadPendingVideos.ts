@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'react-hot-toast';
+import { analyzeVideo } from './analyzeVideo';
 
 // A simple in-memory lock to prevent multiple upload processes from running simultaneously.
 let isUploading = false;
@@ -68,6 +69,38 @@ export const uploadPendingVideos = async (
         }
         
         console.log('Video uploaded successfully:', data || video.fileName);
+
+        // Create public URL for analysis
+        const { data: pub } = supabase.storage.from('videos').getPublicUrl(filePath);
+        const publicUrl = pub.publicUrl;
+
+        // Run fast client-side analysis (~<4s)
+        let analysis: any = null;
+        try {
+          analysis = await analyzeVideo(publicUrl, video.exerciseKey);
+        } catch (e) {
+          console.warn('Analysis failed, proceeding without analysis:', e);
+        }
+
+        // Insert submission row for admin dashboard
+        try {
+          await supabase.from('admin_submissions').insert({
+            athlete_aadhar: athleteAadhar,
+            athlete_name: '',
+            athlete_age: null,
+            athlete_sport: '',
+            exercise: video.exerciseKey,
+            video_path: filePath,
+            video_url: publicUrl,
+            analysis_total_reps: analysis?.totalReps ?? null,
+            analysis_posture_score: analysis?.postureScore ?? null,
+            analysis_avg_confidence: analysis?.avgConfidence ?? null,
+            analysis_duration_sec: analysis?.durationSec ?? null,
+            analysis_notes: analysis?.notes ?? [],
+          });
+        } catch (e) {
+          console.warn('Failed to insert admin submission:', e);
+        }
        
         // Remove from local storage queue
         const currentPending = JSON.parse(localStorage.getItem('pendingVideos') || '[]').filter(

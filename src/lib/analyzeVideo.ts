@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import * as poseDetection from '@tensorflow-models/pose-detection';
 
-export type ExerciseType = 'pushups' | 'situps' | 'pullups';
+export type ExerciseType = 'pushups' | 'situps' | 'pullups' | 'squats';
 
 export interface VideoAnalysisResult {
   exerciseType: ExerciseType;
@@ -26,6 +26,8 @@ function angleBetween(a: any, b: any, c: any): number | null {
 
 export async function analyzeVideo(url: string, exerciseType: ExerciseType): Promise<VideoAnalysisResult> {
   await tf.setBackend('webgl');
+  // @ts-ignore prefer f16 textures for speed on mobile GPUs
+  try { (tf as any).env().set('WEBGL_FORCE_F16_TEXTURES', true); } catch {}
   await tf.ready();
 
   const detector = await poseDetection.createDetector(
@@ -43,7 +45,7 @@ export async function analyzeVideo(url: string, exerciseType: ExerciseType): Pro
     video.onloadeddata = () => resolve();
   });
 
-  const sampleFps = 10; // frames per second to analyze
+  const sampleFps = 6; // fewer frames for speed
   const frameInterval = 1 / sampleFps;
   let lastTime = 0;
   let totalFrames = 0;
@@ -54,13 +56,21 @@ export async function analyzeVideo(url: string, exerciseType: ExerciseType): Pro
   let up = false;
 
   const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  // Downscale processing resolution to speed up inference
+  const maxSide = 512;
+  const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+  canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+  canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
   const ctx = canvas.getContext('2d');
 
   const notes: string[] = [];
+  const startTs = performance.now();
+  const MAX_TIME_MS = 3500; // keep under ~3.5s budget
+  const MAX_FRAMES = 40; // hard cap frames processed
 
   while (!video.ended) {
+    if (performance.now() - startTs > MAX_TIME_MS) break;
+    if (totalFrames >= MAX_FRAMES) break;
     if (video.currentTime - lastTime < frameInterval) {
       await new Promise(requestAnimationFrame);
       continue;
@@ -68,7 +78,7 @@ export async function analyzeVideo(url: string, exerciseType: ExerciseType): Pro
     lastTime = video.currentTime;
 
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const poses = await detector.estimatePoses(video);
+    const poses = await detector.estimatePoses(canvas);
     if (poses.length === 0) {
       await new Promise(requestAnimationFrame);
       continue;
@@ -120,6 +130,20 @@ export async function analyzeVideo(url: string, exerciseType: ExerciseType): Pro
       const avgWristY = (kp[9].y + kp[10].y) / 2;
       const isDown = avgWristY > avgShoulderY;
       const isUp = avgWristY < avgShoulderY;
+      if (isDown && !down) down = true;
+      if (isUp && down && !up) { up = true; reps++; }
+      if (!isUp && up) { up = false; down = false; }
+    } else if (exerciseType === 'squats') {
+      postureSample = (scoreAngle(leftKnee, 90, 60) + scoreAngle(rightKnee, 90, 60)) / 2;
+      const avgHipY = (kp[11].y + kp[12].y) / 2;
+      const avgKneeY = (kp[13].y + kp[14].y) / 2;
+      const avgAnkleY = (kp[15].y + kp[16].y) / 2;
+      
+      const hipKneeDistance = Math.abs(avgHipY - avgKneeY);
+      const kneeAnkleDistance = Math.abs(avgKneeY - avgAnkleY);
+      
+      const isDown = hipKneeDistance < kneeAnkleDistance * 0.6;
+      const isUp = hipKneeDistance > kneeAnkleDistance * 0.8;
       if (isDown && !down) down = true;
       if (isUp && down && !up) { up = true; reps++; }
       if (!isUp && up) { up = false; down = false; }

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "ಅಥ್ಲೀಟ್ಫ್ಲೋ",
+    "tagline": "AI-ಚಾಲಿತ ಕಾರ್ಯಕ್ಷಮತೆ ಪರೀಕ್ಷೆ",
+    "subtitle": "ಅತ್ಯಾಧುನಿಕ ಚಲನೆ ವಿಶ್ಲೇಷಣೆ"
+  },
+  "loading": {
+    "initializing": "ಪ್ರಾರಂಭಿಸುತ್ತಿದೆ...",
+    "loadingAiModels": "AI ಮಾದರಿಗಳನ್ನು ಲೋಡ್ ಮಾಡುತ್ತಿದೆ...",
+    "connectingToCloud": "ಕ್ಲೌಡ್‌ಗೆ ಸಂಪರ್ಕಿಸುತ್ತಿದೆ...",
+    "settingUpAnalytics": "ಕಾರ್ಯಕ್ಷಮತೆ ವಿಶ್ಲೇಷಣೆ ಸೆಟಪ್ ಮಾಡುತ್ತಿದೆ...",
+    "preparingVideoAnalysis": "ವೀಡಿಯೊ ವಿಶ್ಲೇಷಣೆ ತಯಾರಿಸುತ್ತಿದೆ...",
+    "readyToGo": "ಸಿದ್ಧ!",
+    "progress": "ಪ್ರಗತಿ"
+  },
+  "roleSelection": {
+    "welcome": "ಅಥ್ಲೀಟ್ಫ್ಲೋಗೆ ಸ್ವಾಗತ",
+    "chooseRole": "ಪ್ರಾರಂಭಿಸಲು ನಿಮ್ಮ ಪಾತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "iAmAthlete": "ನಾನು ಒಬ್ಬ ಅಥ್ಲೀಟ್",
+    "trackPerformance": "ನನ್ನ ಕಾರ್ಯಕ್ಷಮತೆಯನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
+    "iAmAdmin": "ನಾನು ಒಬ್ಬ ಆಡ್ಮಿನ್",
+    "manageAthletes": "ಅಥ್ಲೀಟ್‌ಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+    "tryDemo": "ಮಾನವ ಪತ್ತೆ ಡೆಮೋ ಪ್ರಯತ್ನಿಸಿ",
+    "experienceAi": "AI ವಿಶ್ಲೇಷಣೆಯನ್ನು ಅನುಭವಿಸಿ",
+    "poweredBy": "ಅತ್ಯಾಧುನಿಕ AI ತಂತ್ರಜ್ಞಾನದಿಂದ ಚಾಲಿತ",
+    "realTimeAnalysis": "ರಿಯಲ್-ಟೈಮ್ ವಿಶ್ಲೇಷಣೆ",
+    "cloudSync": "ಕ್ಲೌಡ್ ಸಿಂಕ್",
+    "performanceTracking": "ಕಾರ್ಯಕ್ಷಮತೆ ಟ್ರ್ಯಾಕಿಂಗ್"
+  },
+  "auth": {
+    "welcomeBack": "ಮತ್ತೆ ಸ್ವಾಗತ!",
+    "joinToday": "ಇಂದು ಅಥ್ಲೀಟ್ಫ್ಲೋಗೆ ಸೇರಿ",
+    "adminLogin": "ಆಡ್ಮಿನ್ ಲಾಗಿನ್",
+    "athleteLogin": "ಅಥ್ಲೀಟ್ ಲಾಗಿನ್",
+    "createAdminAccount": "ಆಡ್ಮಿನ್ ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+    "createAthleteAccount": "ಅಥ್ಲೀಟ್ ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+    "fullName": "ಪೂರ್ಣ ಹೆಸರು",
+    "mobileNumber": "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ",
+    "aadhaarNumber": "ಆಧಾರ್ ಕಾರ್ಡ್ ಸಂಖ್ಯೆ",
+    "email": "ಇಮೇಲ್",
+    "password": "ಪಾಸ್‌ವರ್ಡ್",
+    "showPassword": "ತೋರಿಸಿ",
+    "hidePassword": "ಮರೆಮಾಡಿ",
+    "signIn": "ಸೈನ್ ಇನ್ ಮಾಡಿ",
+    "createAccount": "ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+    "processing": "ಪ್ರಕ್ರಿಯೆಗೊಳಿಸುತ್ತಿದೆ...",
+    "dontHaveAccount": "ಖಾತೆ ಇಲ್ಲವೇ?",
+    "alreadyHaveAccount": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?",
+    "createNewAccount": "ಹೊಸ ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+    "signInInstead": "ಬದಲಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ",
+    "successMessage": "ಯಶಸ್ಸು! ದಯವಿಟ್ಟು ದೃಢೀಕರಣ ಲಿಂಕ್‌ಗಾಗಿ ನಿಮ್ಮ ಇಮೇಲ್‌ನ್ನು ಪರಿಶೀಲಿಸಿ."
+  },
+  "profile": {
+    "backToDashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+    "editProfile": "ಪ್ರೊಫೈಲ್‌ನ್ನು ಸಂಪಾದಿಸಿ",
+    "saveChanges": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
+    "cancel": "ರದ್ದುಗೊಳಿಸಿ",
+    "age": "ವಯಸ್ಸು",
+    "rank": "ಶ್ರೇಣಿ",
+    "status": "ಸ್ಥಿತಿ",
+    "active": "ಸಕ್ರಿಯ",
+    "performanceOverTime": "ಕಾಲಾನಂತರದಲ್ಲಿ ಕಾರ್ಯಕ್ಷಮತೆ",
+    "trackProgress": "ನಿಮ್ಮ ಪ್ರಗತಿ ಮತ್ತು ಸುಧಾರಣೆಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
+    "latestAnalysisVideo": "ಅತ್ಯಂತ ಇತ್ತೀಚಿನ ವಿಶ್ಲೇಷಣೆ ವೀಡಿಯೊ",
+    "reviewPerformance": "ನಿಮ್ಮ ಇತ್ತೀಚಿನ ಕಾರ್ಯಕ್ಷಮತೆ ವಿಶ್ಲೇಷಣೆಯನ್ನು ಪರಿಶೀಲಿಸಿ"
+  },
+  "demo": {
+    "humanDetectionDemo": "ಮಾನವ ಪತ್ತೆ ಡೆಮೋ",
+    "backToHome": "ಮನೆಗೆ ಹಿಂತಿರುಗಿ"
+  },
+  "features": {
+    "aiAnalysis": "AI ವಿಶ್ಲೇಷಣೆ",
+    "cloudSync": "ಕ್ಲೌಡ್ ಸಿಂಕ್",
+    "performance": "ಕಾರ್ಯಕ್ಷಮತೆ"
+  },
+  "common": {
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+    "error": "ದೋಷ",
+    "success": "ಯಶಸ್ಸು",
+    "warning": "ಎಚ್ಚರಿಕೆ",
+    "info": "ಮಾಹಿತಿ"
+  }
+}

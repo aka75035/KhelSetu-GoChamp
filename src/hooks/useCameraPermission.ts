@@ -21,22 +21,3 @@ export function useCameraPermission() {
 
   return permission;
 }
-
-// src/SomeComponent.tsx
-import React from "react";
-import { useCameraPermission } from "./hooks/useCameraPermission";
-
-const SomeComponent = () => {
-  const cameraPermission = useCameraPermission();
-
-  return (
-    <div>
-      {cameraPermission === "denied" && (
-        <p>Please enable camera in settings</p>
-      )}
-      {/* ...rest of your component */}
-    </div>
-  );
-};
-
-export default SomeComponent;

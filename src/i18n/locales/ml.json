@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "അത്ലീറ്റ്ഫ്ലോ",
+    "tagline": "AI-നിയന്ത്രിത പ്രകടന പരിശോധന",
+    "subtitle": "അധുനാതന ചലന വിശകലനം"
+  },
+  "loading": {
+    "initializing": "ആരംഭിക്കുന്നു...",
+    "loadingAiModels": "AI മോഡലുകൾ ലോഡ് ചെയ്യുന്നു...",
+    "connectingToCloud": "ക്ലൗഡുമായി ബന്ധിപ്പിക്കുന്നു...",
+    "settingUpAnalytics": "പ്രകടന വിശകലനം സജ്ജീകരിക്കുന്നു...",
+    "preparingVideoAnalysis": "വീഡിയോ വിശകലനം തയ്യാറാക്കുന്നു...",
+    "readyToGo": "തയ്യാറാണ്!",
+    "progress": "പുരോഗതി"
+  },
+  "roleSelection": {
+    "welcome": "അത്ലീറ്റ്ഫ്ലോയിലേക്ക് സ്വാഗതം",
+    "chooseRole": "ആരംഭിക്കാൻ നിങ്ങളുടെ പങ്ക് തിരഞ്ഞെടുക്കുക",
+    "iAmAthlete": "ഞാൻ ഒരു അത്ലീറ്റ് ആണ്",
+    "trackPerformance": "എന്റെ പ്രകടനം ട്രാക്ക് ചെയ്യുക",
+    "iAmAdmin": "ഞാൻ ഒരു അഡ്മിൻ ആണ്",
+    "manageAthletes": "അത്ലീറ്റുകളെ നിയന്ത്രിക്കുക",
+    "tryDemo": "മനുഷ്യ കണ്ടെത്തൽ ഡെമോ പരീക്ഷിക്കുക",
+    "experienceAi": "AI വിശകലനം അനുഭവിക്കുക",
+    "poweredBy": "അധുനാതന AI സാങ്കേതികവിദ്യയാൽ പ്രവർത്തിക്കുന്നു",
+    "realTimeAnalysis": "റിയൽ-ടൈം വിശകലനം",
+    "cloudSync": "ക്ലൗഡ് സിങ്ക്",
+    "performanceTracking": "പ്രകടന ട്രാക്കിംഗ്"
+  },
+  "auth": {
+    "welcomeBack": "വീണ്ടും സ്വാഗതം!",
+    "joinToday": "ഇന്ന് അത്ലീറ്റ്ഫ്ലോയിൽ ചേരുക",
+    "adminLogin": "അഡ്മിൻ ലോഗിൻ",
+    "athleteLogin": "അത്ലീറ്റ് ലോഗിൻ",
+    "createAdminAccount": "അഡ്മിൻ അക്കൗണ്ട് സൃഷ്ടിക്കുക",
+    "createAthleteAccount": "അത്ലീറ്റ് അക്കൗണ്ട് സൃഷ്ടിക്കുക",
+    "fullName": "പൂർണ്ണ നാമം",
+    "mobileNumber": "മൊബൈൽ നമ്പർ",
+    "aadhaarNumber": "ആധാർ കാർഡ് നമ്പർ",
+    "email": "ഇമെയിൽ",
+    "password": "പാസ്‌വേഡ്",
+    "showPassword": "കാണിക്കുക",
+    "hidePassword": "മറയ്ക്കുക",
+    "signIn": "സൈൻ ഇൻ ചെയ്യുക",
+    "createAccount": "അക്കൗണ്ട് സൃഷ്ടിക്കുക",
+    "processing": "പ്രോസസ്സ് ചെയ്യുന്നു...",
+    "dontHaveAccount": "അക്കൗണ്ട് ഇല്ലേ?",
+    "alreadyHaveAccount": "ഇതിനകം അക്കൗണ്ട് ഉണ്ടോ?",
+    "createNewAccount": "പുതിയ അക്കൗണ്ട് സൃഷ്ടിക്കുക",
+    "signInInstead": "പകരം സൈൻ ഇൻ ചെയ്യുക",
+    "successMessage": "വിജയം! ദയവായി സ്ഥിരീകരണ ലിങ്കിനായി നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുക."
+  },
+  "profile": {
+    "backToDashboard": "ഡാഷ്‌ബോർഡിലേക്ക് തിരികെ പോകുക",
+    "editProfile": "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക",
+    "saveChanges": "മാറ്റങ്ങൾ സേവ് ചെയ്യുക",
+    "cancel": "റദ്ദാക്കുക",
+    "age": "പ്രായം",
+    "rank": "റാങ്ക്",
+    "status": "സ്ഥിതി",
+    "active": "സജീവം",
+    "performanceOverTime": "കാലക്രമേണ പ്രകടനം",
+    "trackProgress": "നിങ്ങളുടെ പുരോഗതിയും മെച്ചപ്പെടുത്തലുകളും ട്രാക്ക് ചെയ്യുക",
+    "latestAnalysisVideo": "ഏറ്റവും പുതിയ വിശകലന വീഡിയോ",
+    "reviewPerformance": "നിങ്ങളുടെ ഏറ്റവും പുതിയ പ്രകടന വിശകലനം അവലോകനം ചെയ്യുക"
+  },
+  "demo": {
+    "humanDetectionDemo": "മനുഷ്യ കണ്ടെത്തൽ ഡെമോ",
+    "backToHome": "ഹോമിലേക്ക് തിരികെ പോകുക"
+  },
+  "features": {
+    "aiAnalysis": "AI വിശകലനം",
+    "cloudSync": "ക്ലൗഡ് സിങ്ക്",
+    "performance": "പ്രകടനം"
+  },
+  "common": {
+    "loading": "ലോഡ് ചെയ്യുന്നു...",
+    "error": "പിശക്",
+    "success": "വിജയം",
+    "warning": "മുന്നറിയിപ്പ്",
+    "info": "വിവരം"
+  }
+}
