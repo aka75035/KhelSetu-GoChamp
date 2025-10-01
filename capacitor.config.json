@@ -1,7 +1,10 @@
 {
   "appId": "com.khelsetu.app",
   "appName": "Khelsetu",
-  "webDir": "build",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
   "plugins": {
     "AndroidPermissions": {
       "READ_EXTERNAL_STORAGE": {
@@ -10,6 +13,17 @@
       "WRITE_EXTERNAL_STORAGE": {
         "prompt": "Allow app to write to external storage"
       }
+    },
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffffff",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": true,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#999999"
     }
   }
 }

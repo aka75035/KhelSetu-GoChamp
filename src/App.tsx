@@ -31,7 +31,6 @@ import BiometricMonitor from './components/BiometricMonitor';
 import SocialFeatures from './components/SocialFeatures';
 import ARVisualization from './components/ARVisualization';
 import Gamification from './components/Gamification';
-import { useNavigate } from 'react-router-dom';
 
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   const { tForJSX } = useTranslationWithVoice();
@@ -329,10 +328,10 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [sport, setSport] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -348,7 +347,7 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
         }
         if (user) {
           console.log('Sign-in successful:', user); // Log user details for debugging
-          navigate('/dashboard'); // Redirect to the main app page
+          // User will be automatically redirected by the auth state change
         }
       } else {
         // Sign Up
@@ -358,6 +357,8 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
         };
         if (role === 'athlete') {
           signUpData.sport = sport;
+          signUpData.mobile_number = mobileNumber;
+          signUpData.aadhaar_number = aadhaarNumber;
         }
         const { error, user } = await supabase.auth.signUp({
           email,
@@ -454,6 +455,18 @@ function EmailPasswordAuthPage({ onBack, role }: { onBack: () => void; role: 'ad
                           required 
                           value={aadhaarNumber} 
                           onChange={e => setAadhaarNumber(e.target.value)}
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="sport" className="text-sm font-semibold text-gray-700">Sport</Label>
+                        <Input 
+                          id="sport" 
+                          type="text" 
+                          placeholder="Cricket, Football, Swimming, etc." 
+                          required 
+                          value={sport} 
+                          onChange={e => setSport(e.target.value)}
                           className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                         />
                     </div>

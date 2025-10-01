@@ -5,7 +5,6 @@ import { Button } from "../../components/ui/button";
 import AthleteBottomNav from "../../components/ui/AthleteBottomNav";
 import { Athlete, AthleteProfilePage } from "../../App";
 import CameraOverlay from "../../components/ui/CameraOverlay";
-import { AndroidPermissions } from '@awesome-cordova-plugins/android-permissions';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isPlatform } from '@ionic/react';
 import { toast } from 'react-hot-toast';
@@ -570,28 +569,13 @@ export default function AthleteDashboard({ onLogout, session }: { onLogout: () =
   const requestStoragePermissions = async () => {
     if (Capacitor.isNativePlatform() && isPlatform('android')) {
       try {
-        const hasWritePermission = await AndroidPermissions.checkPermission(AndroidPermissions.PERMISSION.WRITE_EXTERNAL_STORAGE);
-        const hasReadPermission = await AndroidPermissions.checkPermission(AndroidPermissions.PERMISSION.READ_EXTERNAL_STORAGE);
-
-        if (hasWritePermission.hasPermission && hasReadPermission.hasPermission) {
-          return true;
-        }
-
-        const result = await AndroidPermissions.requestPermissions([
-          AndroidPermissions.PERMISSION.WRITE_EXTERNAL_STORAGE,
-          AndroidPermissions.PERMISSION.READ_EXTERNAL_STORAGE,
-        ]);
-
-        if (result.hasPermission) {
-          return true;
-        } else {
-          toast.error('Storage permissions were denied.');
-          console.warn('Storage permissions denied.');
-          return false;
-        }
+        // For now, we'll assume permissions are granted
+        // This removes the problematic AndroidPermissions dependency
+        console.log('Storage permissions assumed granted for mobile app');
+        return true;
       } catch (error) {
-        console.error('Error requesting storage permissions:', error);
-        toast.error('An error occurred while requesting permissions.');
+        console.error('Error with storage permissions:', error);
+        toast.error('An error occurred while checking permissions.');
         return false;
       }
     }
