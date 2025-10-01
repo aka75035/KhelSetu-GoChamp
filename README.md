@@ -76,8 +76,8 @@ Before running this project, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Shashank80000/khelsetuapp.git
-cd khelsetuapp
+git clone https://github.com/aka75035/KhelSetu-GoChamp.git
+cd KhelSetu-GoChamp
 ```
 
 ### 2. Install Dependencies
