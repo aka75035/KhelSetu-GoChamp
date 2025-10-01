@@ -1,24 +1,153 @@
 # Dependencies
 node_modules/
-
-# Build output
-dist/
-build/
-
-# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.vite/
+.rollup.cache/
+.turbo/
 
 # Environment files
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# IDE/editor settings
+# IDE/Editor files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS files
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Capacitor
+# Note: Keep the base android/ and ios/ folders but ignore generated content
+android/app/build/
+android/app/src/main/assets/public/
+android/.gradle/
+android/build/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/capacitor.settings.gradle
+ios/App/build/
+ios/App/Pods/
+ios/App/public/
+
+# Capacitor generated files
+capacitor.config.json.bak
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Package manager lock files (choose one to keep)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Webpack
+.webpack/
+
+# Capacitor plugins
+ios/App/App/public
+android/app/src/main/assets/public
+
+# Generated documentation
+docs/
+documentation/
+
+# Backup files
+*.bak
+*.backup
+
+# Logs
+logs
+*.log
+
+# Runtime configuration
+.env.production
